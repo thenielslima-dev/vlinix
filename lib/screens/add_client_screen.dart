@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -18,8 +20,16 @@ class _AddClientScreenState extends State<AddClientScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  final _addressController = TextEditingController();
+
+  // --- NOVOS CONTROLES DE ENDEREÇO ---
+  final _zipController = TextEditingController();
+  final _streetController = TextEditingController();
+  final _numberController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+
   bool _isLoading = false;
+  bool _isSearchingZip = false;
 
   // Estado para controlar qual país está selecionado (Padrão: BR)
   String _selectedCountry = 'BR';
@@ -41,7 +51,6 @@ class _AddClientScreenState extends State<AddClientScreen> {
     filter: {"#": RegExp(r'[0-9]')},
   );
 
-  // Getter para pegar a máscara atual baseada na seleção
   MaskTextInputFormatter get _currentMask {
     switch (_selectedCountry) {
       case 'US':
@@ -53,7 +62,6 @@ class _AddClientScreenState extends State<AddClientScreen> {
     }
   }
 
-  // Getter para o prefixo (ajuda visual)
   String get _countryPrefix {
     switch (_selectedCountry) {
       case 'US':
@@ -72,11 +80,70 @@ class _AddClientScreenState extends State<AddClientScreen> {
       _nameController.text = widget.clientToEdit!['full_name'] ?? '';
       _phoneController.text = widget.clientToEdit!['phone'] ?? '';
       _emailController.text = widget.clientToEdit!['email'] ?? '';
-      _addressController.text = widget.clientToEdit!['address'] ?? '';
 
-      // Tenta "adivinhar" o país pelo tamanho do número se estiver editando,
-      // mas o ideal seria salvar o código do país no banco separado.
-      // Por simplicidade, mantemos BR como padrão na edição se não for óbvio.
+      // Como o endereço antigo era uma string única, colocamos na 'Rua' para o usuário não perder a info
+      _streetController.text = widget.clientToEdit!['address'] ?? '';
+    }
+  }
+
+  // --- BUSCA AUTOMÁTICA DE ENDEREÇO (CEP / ZIPCODE) ---
+  Future<void> _searchZipCode() async {
+    final zip = _zipController.text.replaceAll(RegExp(r'[^0-9a-zA-Z]'), '');
+    if (zip.isEmpty) return;
+
+    setState(() => _isSearchingZip = true);
+
+    try {
+      if (_selectedCountry == 'BR') {
+        // API para Brasil (ViaCEP)
+        final res = await http.get(
+          Uri.parse('https://viacep.com.br/ws/$zip/json/'),
+        );
+        if (res.statusCode == 200) {
+          final data = json.decode(res.body);
+          if (data['erro'] == null) {
+            setState(() {
+              _streetController.text = data['logradouro'] ?? '';
+              _cityController.text = data['localidade'] ?? '';
+              _stateController.text = data['uf'] ?? '';
+            });
+          }
+        }
+      } else if (_selectedCountry == 'US') {
+        // API para Estados Unidos (Zippopotam)
+        final res = await http.get(
+          Uri.parse('https://api.zippopotam.us/us/$zip'),
+        );
+        if (res.statusCode == 200) {
+          final data = json.decode(res.body);
+          final places = data['places'] as List;
+          if (places.isNotEmpty) {
+            setState(() {
+              _cityController.text = places[0]['place name'] ?? '';
+              _stateController.text = places[0]['state abbreviation'] ?? '';
+            });
+          }
+        }
+      } else if (_selectedCountry == 'MX') {
+        // API para México (Zippopotam)
+        final res = await http.get(
+          Uri.parse('https://api.zippopotam.us/mx/$zip'),
+        );
+        if (res.statusCode == 200) {
+          final data = json.decode(res.body);
+          final places = data['places'] as List;
+          if (places.isNotEmpty) {
+            setState(() {
+              _cityController.text = places[0]['place name'] ?? '';
+              _stateController.text = places[0]['state abbreviation'] ?? '';
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Erro ao buscar CEP/Zip: $e');
+    } finally {
+      setState(() => _isSearchingZip = false);
     }
   }
 
@@ -88,16 +155,32 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
     try {
       final supabase = Supabase.instance.client;
-
-      // Opcional: Salvar o prefixo junto? Ex: "+55 (11) 9..."
-      // Por enquanto salvamos o que está no campo formatado.
       final fullPhone = _phoneController.text.trim();
+
+      // Montar o endereço em uma string formatada para salvar no banco
+      List<String> addressParts = [];
+      if (_streetController.text.isNotEmpty) {
+        String street = _streetController.text.trim();
+        if (_numberController.text.isNotEmpty)
+          street += ', ${_numberController.text.trim()}';
+        addressParts.add(street);
+      }
+      if (_cityController.text.isNotEmpty) {
+        String cityState = _cityController.text.trim();
+        if (_stateController.text.isNotEmpty)
+          cityState += ' - ${_stateController.text.trim()}';
+        addressParts.add(cityState);
+      }
+      if (_zipController.text.isNotEmpty)
+        addressParts.add(_zipController.text.trim());
+
+      final finalAddress = addressParts.join(' | ');
 
       final data = {
         'full_name': _nameController.text.trim(),
         'phone': fullPhone,
         'email': _emailController.text.trim(),
-        'address': _addressController.text.trim(),
+        'address': finalAddress,
       };
 
       if (widget.clientToEdit == null) {
@@ -141,6 +224,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
   Widget build(BuildContext context) {
     final isEditing = widget.clientToEdit != null;
     final lang = AppLocalizations.of(context)!;
+    final isPt = Localizations.localeOf(context).languageCode == 'pt';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -161,23 +245,30 @@ class _AddClientScreenState extends State<AddClientScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
                   ],
                 ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // NOME
+                    // --- DADOS PESSOAIS ---
+                    Text(
+                      lang.labelProfileInfo,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(
                         labelText: lang.labelName,
                         prefixIcon: const Icon(Icons.person),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
                       ),
                       validator: (value) => value == null || value.isEmpty
                           ? 'Informe o nome'
@@ -185,17 +276,15 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // --- SELETOR DE PAÍS E TELEFONE ---
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Dropdown de País
                         Container(
-                          height: 56, // Altura padrão do input
+                          height: 56,
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
@@ -203,8 +292,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
                               onChanged: (String? newValue) {
                                 setState(() {
                                   _selectedCountry = newValue!;
-                                  _phoneController
-                                      .clear(); // Limpa ao trocar para evitar conflito de máscara
+                                  _phoneController.clear();
+                                  _zipController
+                                      .clear(); // Limpa CEP ao trocar país
                                 });
                               },
                               items: const [
@@ -225,55 +315,129 @@ class _AddClientScreenState extends State<AddClientScreen> {
                           ),
                         ),
                         const SizedBox(width: 10),
-
-                        // Campo de Telefone (Muda conforme seleção)
                         Expanded(
                           child: TextFormField(
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
-                            inputFormatters: [
-                              _currentMask,
-                            ], // Aplica a máscara selecionada
+                            inputFormatters: [_currentMask],
                             decoration: InputDecoration(
                               labelText: lang.labelPhone,
                               prefixIcon: const Icon(Icons.phone),
-                              prefixText:
-                                  _countryPrefix, // Mostra +55, +1, etc.
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              hintText: _currentMask
-                                  .getMask(), // Mostra o formato esperado (##) ...
+                              prefixText: _countryPrefix,
+                              hintText: _currentMask.getMask(),
                             ),
                           ),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 16),
-                    // EMAIL
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: lang.labelEmail,
                         prefixIcon: const Icon(Icons.email),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                      ),
+                    ),
+
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Divider(),
+                    ),
+
+                    // --- ENDEREÇO COM AUTOCOMPLETAR ---
+                    Text(
+                      lang.labelAddress,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // ENDEREÇO
-                    TextFormField(
-                      controller: _addressController,
-                      decoration: InputDecoration(
-                        labelText: lang.labelAddress,
-                        prefixIcon: const Icon(Icons.location_on),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: TextFormField(
+                            controller: _zipController,
+                            keyboardType: TextInputType.text,
+                            decoration: InputDecoration(
+                              labelText: isPt ? 'CEP' : 'Zipcode',
+                              prefixIcon: const Icon(
+                                Icons.markunread_mailbox_outlined,
+                              ),
+                              suffixIcon: _isSearchingZip
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(12),
+                                      child: SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    )
+                                  : IconButton(
+                                      icon: const Icon(
+                                        Icons.search,
+                                        color: AppColors.accent,
+                                      ),
+                                      onPressed:
+                                          _searchZipCode, // CLIQUE NA LUPA PARA BUSCAR
+                                    ),
+                            ),
+                            onFieldSubmitted: (_) =>
+                                _searchZipCode(), // ENTER PARA BUSCAR
+                          ),
                         ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 1,
+                          child: TextFormField(
+                            controller: _numberController,
+                            decoration: InputDecoration(
+                              labelText: isPt ? 'Número' : 'Number',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _streetController,
+                      decoration: InputDecoration(
+                        labelText: isPt ? 'Rua / Logradouro' : 'Street',
+                        prefixIcon: const Icon(Icons.location_on_outlined),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: TextFormField(
+                            controller: _cityController,
+                            decoration: InputDecoration(
+                              labelText: isPt ? 'Cidade' : 'City',
+                              prefixIcon: const Icon(Icons.location_city),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
+                          child: TextFormField(
+                            controller: _stateController,
+                            decoration: InputDecoration(
+                              labelText: isPt ? 'Estado' : 'State',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
