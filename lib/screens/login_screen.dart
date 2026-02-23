@@ -183,7 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 40),
 
                   if (!_isLoading) ...[
-                    /*
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -218,7 +217,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: 20),
-*/
                   ],
 
                   TextField(
@@ -266,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            /*TextButton(
+                            TextButton(
                               onPressed: () {
                                 Navigator.push(
                                   context,
@@ -282,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),*/
+                            ),
                           ],
                         ),
                 ],
