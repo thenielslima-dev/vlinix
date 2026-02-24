@@ -110,7 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final String? currentGoogleId = currentData['google_event_id'];
       String? newGoogleEventId;
 
-      if (newStatus == 'cancelado') {
+      // --- MUDANÇA: APAGA DO GOOGLE SE CANCELADO *OU* CONCLUÍDO ---
+      if (newStatus == 'cancelado' || newStatus == 'concluido') {
         if (currentGoogleId != null && currentGoogleId.isNotEmpty) {
           await GoogleCalendarService.instance.deleteEvent(currentGoogleId);
         }
@@ -128,7 +129,6 @@ class _HomeScreenState extends State<HomeScreen> {
         final title = 'Vlinix: $servicesNames - $clientName';
         final currency = NumberFormat.simpleCurrency(name: '').currencySymbol;
 
-        // --- MUDANÇA DA TRADUÇÃO DO GOOGLE CALENDAR AQUI ---
         final desc = lang.msgGoogleReactivated(
           servicesNames,
           '$currency $totalPrice',
@@ -157,7 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (newGoogleEventId != null) {
         updateData['google_event_id'] = newGoogleEventId;
-      } else if (newStatus == 'cancelado') {
+      } else if (newStatus == 'cancelado' || newStatus == 'concluido') {
+        // --- MUDANÇA: REMOVE O ID DO GOOGLE DO BANCO SE FOR CONCLUÍDO TAMBÉM ---
         updateData['google_event_id'] = null;
       }
 
@@ -169,7 +170,8 @@ class _HomeScreenState extends State<HomeScreen> {
         String msg = '';
         Color color = Colors.blue;
 
-        if (newStatus == 'cancelado' &&
+        // Se o evento foi removido do Google (seja por cancelamento ou conclusão)
+        if ((newStatus == 'cancelado' || newStatus == 'concluido') &&
             currentGoogleId != null &&
             currentGoogleId.isNotEmpty) {
           feedbackMsg = lang.msgRemovedFromGoogle;
@@ -210,7 +212,9 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(lang.msgErrorGeneric(e.toString())),
+            content: Text(
+              AppLocalizations.of(context)!.msgErrorGeneric(e.toString()),
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -306,6 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // --- NOVO DIÁLOGO DE PAGAMENTO COM OPÇÃO DE GORJETA ---
   void _showPaymentDialog(int appointmentId) {
     final lang = AppLocalizations.of(context)!;
     final currencySymbol = lang.localeName == 'pt' ? 'R\$' : '\$';
@@ -482,7 +487,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final currentUser = Supabase.instance.client.auth.currentUser;
     final lang = AppLocalizations.of(context)!;
 
-    // --- MUDANÇA USUÁRIO DESCONHECIDO ---
     final String displayName =
         currentUser?.userMetadata?['full_name'] ?? lang.labelDefaultUser;
 
@@ -739,7 +743,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     onPressed: () {
                       Navigator.pop(ctx);
-                      _updateStatus(apt['id'], 'pendente'); // REATIVAR
+                      _updateStatus(apt['id'], 'pendente');
                     },
                     child: Text(lang.btnReactivate),
                   ),
