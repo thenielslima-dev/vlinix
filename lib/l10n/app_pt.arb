@@ -164,5 +164,6 @@
     "labelEstimatedTotal": "Total Estimado",
     "dialogDeleteExpenseTitle": "Excluir Despesa?",
     "dialogDeleteExpenseContent": "Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.",
-    "msgExpenseDeleted": "Despesa excluída com sucesso!"
+    "msgExpenseDeleted": "Despesa excluída com sucesso!",
+    "btnRegisterVehicle": "Cadastrar Veículo"
 }

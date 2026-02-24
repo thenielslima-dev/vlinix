@@ -1,30 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vlinix/theme/app_colors.dart';
-import 'package:vlinix/l10n/app_localizations.dart'; // Para Tradução
+import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/screens/edit_profile_screen.dart';
 import 'package:vlinix/screens/login_screen.dart';
-import 'package:vlinix/services/user_service.dart'; // Para Atualização Instantânea
+import 'package:vlinix/services/user_service.dart';
 
 class UserProfileMenu extends StatelessWidget {
   const UserProfileMenu({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final lang = AppLocalizations.of(context)!; // Pega as traduções
+    final lang = AppLocalizations.of(context)!;
 
     // Ouve as mudanças do usuário em tempo real
     return ValueListenableBuilder<User?>(
       valueListenable: UserService.instance.userNotifier,
       builder: (context, currentUser, child) {
-        // Dados dinâmicos vindos do "carteiro" (UserService)
         final String? avatarUrl = currentUser?.userMetadata?['avatar_url'];
         final String fullName =
-            currentUser?.userMetadata?['full_name'] ??
-            lang.labelDefaultUser; // CHAVE APLICADA
+            currentUser?.userMetadata?['full_name'] ?? lang.labelDefaultUser;
         final String displayName = fullName.isNotEmpty
             ? fullName
-            : lang.labelDefaultUser; // CHAVE APLICADA
+            : lang.labelDefaultUser;
 
         return PopupMenuButton<String>(
           offset: const Offset(0, 50),
@@ -59,9 +57,12 @@ class UserProfileMenu extends StatelessWidget {
                   builder: (context) => const EditProfileScreen(),
                 ),
               );
-              // Não precisa de setState aqui, o UserService cuida disso!
             } else if (value == 'logout') {
               await Supabase.instance.client.auth.signOut();
+
+              // --- FORÇA A LIMPEZA DA MEMÓRIA AQUI ---
+              UserService.instance.refreshUser();
+
               if (context.mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -72,7 +73,6 @@ class UserProfileMenu extends StatelessWidget {
           },
 
           itemBuilder: (context) => [
-            // Cabeçalho com Nome e Email atualizados
             PopupMenuItem<String>(
               enabled: false,
               child: Column(
@@ -95,14 +95,13 @@ class UserProfileMenu extends StatelessWidget {
                 ],
               ),
             ),
-            // Opções Traduzidas
             PopupMenuItem(
               value: 'edit',
               child: Row(
                 children: [
                   const Icon(Icons.edit, color: AppColors.primary, size: 20),
                   const SizedBox(width: 12),
-                  Text(lang.tooltipEditProfile), // <--- Traduzido
+                  Text(lang.tooltipEditProfile),
                 ],
               ),
             ),
@@ -119,7 +118,7 @@ class UserProfileMenu extends StatelessWidget {
                   Text(
                     lang.menuLogout,
                     style: const TextStyle(color: AppColors.error),
-                  ), // <--- Traduzido
+                  ),
                 ],
               ),
             ),

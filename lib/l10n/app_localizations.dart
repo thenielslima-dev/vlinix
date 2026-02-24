@@ -1089,6 +1089,12 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Despesa excluída com sucesso!'**
   String get msgExpenseDeleted;
+
+  /// No description provided for @btnRegisterVehicle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cadastrar Veículo'**
+  String get btnRegisterVehicle;
 }
 
 class _AppLocalizationsDelegate

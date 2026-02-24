@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/l10n/app_localizations.dart'; // <--- IMPORTADO
 import 'main_screen.dart';
+import 'package:vlinix/services/user_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -64,6 +65,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         password: password,
         data: {'full_name': name},
       );
+
+      UserService.instance.refreshUser();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

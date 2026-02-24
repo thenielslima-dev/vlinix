@@ -517,4 +517,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get msgExpenseDeleted => 'Despesa excluída com sucesso!';
+
+  @override
+  String get btnRegisterVehicle => 'Cadastrar Veículo';
 }

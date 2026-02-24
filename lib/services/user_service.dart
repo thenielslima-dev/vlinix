@@ -3,8 +3,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Esta classe é um "Singleton". Só existe UMA instância dela no app inteiro.
 class UserService {
-  // Construtor privado
-  UserService._();
+  // Construtor privado: Agora ele escuta as mudanças de Auth automaticamente!
+  UserService._() {
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      refreshUser();
+    });
+  }
+
   // A única instância que todo mundo vai usar
   static final UserService instance = UserService._();
 
@@ -19,6 +24,8 @@ class UserService {
     final updatedUser = Supabase.instance.client.auth.currentUser;
     // Atualizamos o notificador. Isso dispara o aviso para quem estiver ouvindo.
     userNotifier.value = updatedUser;
-    debugPrint('UserService: Dados do usuário atualizados globalmente.');
+    debugPrint(
+      'UserService: Dados atualizados. Usuário atual: ${updatedUser?.email}',
+    );
   }
 }

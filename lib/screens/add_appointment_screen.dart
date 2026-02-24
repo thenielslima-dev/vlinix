@@ -7,6 +7,7 @@ import 'package:vlinix/services/google_calendar_service.dart';
 
 import 'add_client_screen.dart';
 import 'add_service_screen.dart';
+import 'add_vehicle_screen.dart'; // <--- IMPORTANTE: Adicionado import do veículo
 
 class AddAppointmentScreen extends StatefulWidget {
   final Map<String, dynamic>? appointmentToEdit;
@@ -32,6 +33,11 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   bool _isLoading = false;
   bool _isFetchingInitialData = true;
 
+  // --- NOVAS VARIÁVEIS DE CONTROLE DE FLUXO ---
+  bool _hasClients = false;
+  bool _hasVehicles = false;
+  bool _hasServices = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,10 +61,12 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
     final supabase = Supabase.instance.client;
     try {
+      // CORREÇÃO: Tiramos o !inner para que clientes sem veículos apareçam na verificação!
       final clientsData = await supabase
           .from('clients')
-          .select('*, vehicles!inner(id)')
+          .select('*, vehicles(id)')
           .order('full_name');
+
       final servicesData = await supabase
           .from('services')
           .select()
@@ -68,6 +76,14 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
         setState(() {
           _clients = List<Map<String, dynamic>>.from(clientsData);
           _allServices = List<Map<String, dynamic>>.from(servicesData);
+
+          // VERIFICAÇÕES INTELIGENTES PARA O FLUXO VAZIO
+          _hasClients = _clients.isNotEmpty;
+          _hasVehicles = _clients.any(
+            (c) => c['vehicles'] != null && (c['vehicles'] as List).isNotEmpty,
+          );
+          _hasServices = _allServices.isNotEmpty;
+
           _isFetchingInitialData = false;
         });
 
@@ -350,6 +366,30 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     }
   }
 
+  // --- COMPONENTE AUXILIAR PARA BOTÕES ---
+  Widget _buildActionButton(
+    String label,
+    IconData icon,
+    Color color,
+    Widget screen,
+  ) {
+    return SizedBox(
+      width: 250,
+      height: 45,
+      child: ElevatedButton.icon(
+        icon: Icon(icon),
+        label: Text(label),
+        style: ElevatedButton.styleFrom(backgroundColor: color),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => screen),
+          ).then((_) => _fetchInitialData());
+        },
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
     final lang = AppLocalizations.of(context)!;
     return Center(
@@ -379,48 +419,36 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
               style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 30),
-            if (_clients.isEmpty)
-              SizedBox(
-                width: 250,
-                height: 45,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.person_add),
-                  label: Text(lang.btnRegisterClient),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AddClientScreen(),
-                      ),
-                    ).then((_) => _fetchInitialData());
-                  },
-                ),
+
+            // LÓGICA INTELIGENTE DOS BOTÕES
+            if (!_hasClients) ...[
+              _buildActionButton(
+                lang.btnRegisterClient,
+                Icons.person_add,
+                AppColors.primary,
+                const AddClientScreen(),
               ),
-            if (_clients.isEmpty && _allServices.isEmpty)
               const SizedBox(height: 16),
-            if (_allServices.isEmpty)
-              SizedBox(
-                width: 250,
-                height: 45,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.design_services),
-                  label: Text(lang.btnRegisterService),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AddServiceScreen(),
-                      ),
-                    ).then((_) => _fetchInitialData());
-                  },
-                ),
+            ],
+
+            if (_hasClients && !_hasVehicles) ...[
+              _buildActionButton(
+                lang.btnRegisterVehicle,
+                Icons.directions_car,
+                AppColors.primary,
+                const AddVehicleScreen(),
               ),
+              const SizedBox(height: 16),
+            ],
+
+            if (!_hasServices) ...[
+              _buildActionButton(
+                lang.btnRegisterService,
+                Icons.design_services,
+                AppColors.accent,
+                const AddServiceScreen(),
+              ),
+            ],
           ],
         ),
       ),
@@ -441,7 +469,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
       backgroundColor: AppColors.background,
       body: _isFetchingInitialData
           ? const Center(child: CircularProgressIndicator())
-          : (_clients.isEmpty || _allServices.isEmpty)
+          // AQUI ESTÁ A MÁGICA: Só mostra o Empty State se faltar Client, Veículo ou Serviço
+          : (!_hasClients || !_hasVehicles || !_hasServices)
           ? _buildEmptyState()
           : Center(
               child: SingleChildScrollView(
@@ -475,6 +504,11 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                             prefixIcon: const Icon(Icons.person),
                           ),
                           items: _clients
+                              .where(
+                                (c) =>
+                                    c['vehicles'] != null &&
+                                    (c['vehicles'] as List).isNotEmpty,
+                              ) // Filtra aqui para garantir que não dê bug de carro vazio!
                               .map(
                                 (c) => DropdownMenuItem(
                                   value: c['id'] as int,
@@ -561,7 +595,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: Text(
-                                '${lang.labelEstimatedTotal}: ${NumberFormat.simpleCurrency(name: '').currencySymbol} $_totalPrice', // <--- CORREÇÃO AQUI
+                                '${lang.labelEstimatedTotal}: ${NumberFormat.simpleCurrency(name: '').currencySymbol} ${_totalPrice.toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,

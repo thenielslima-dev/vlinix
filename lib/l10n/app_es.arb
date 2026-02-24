@@ -164,5 +164,6 @@
     "labelEstimatedTotal": "Total Estimado",
     "dialogDeleteExpenseTitle": "¿Eliminar Gasto?",
     "dialogDeleteExpenseContent": "¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer.",
-    "msgExpenseDeleted": "¡Gasto eliminado con éxito!"
+    "msgExpenseDeleted": "¡Gasto eliminado con éxito!",
+    "btnRegisterVehicle": "Registrar Vehículo"
 }

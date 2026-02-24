@@ -521,4 +521,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get msgExpenseDeleted => '¡Gasto eliminado con éxito!';
+
+  @override
+  String get btnRegisterVehicle => 'Registrar Vehículo';
 }

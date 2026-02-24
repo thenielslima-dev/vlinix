@@ -517,4 +517,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get msgExpenseDeleted => 'Expense deleted successfully!';
+
+  @override
+  String get btnRegisterVehicle => 'Register Vehicle';
 }
