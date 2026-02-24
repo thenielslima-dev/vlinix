@@ -111,7 +111,7 @@ class _MainScreenState extends State<MainScreen> {
     final lang = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: _screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: Colors.black12, width: 0.5)),
