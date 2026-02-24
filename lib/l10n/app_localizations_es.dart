@@ -379,7 +379,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get msgErrorCleanupAvatar => 'Error no crítico en la limpieza';
 
   @override
-  String get msgProfileUpdated => '¡Perfil actualizado con éxito! ✅';
+  String get msgProfileUpdated => '¡Perfil actualizado con éxito!';
 
   @override
   String get labelNetBalance => 'SALDO NETO';
@@ -403,10 +403,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get labelWithoutRegistration => 'Sin registro';
 
   @override
-  String get msgRemovedFromGoogle => 'Eliminado de Google Calendar 📅';
+  String get msgRemovedFromGoogle => 'Eliminado de Google Calendar';
 
   @override
-  String get msgAddedToGoogle => 'Añadido a Google Calendar 📅';
+  String get msgAddedToGoogle => 'Añadido a Google Calendar';
 
   @override
   String get dialogReactivateTitle => '¿Reactivar Cita?';
@@ -450,11 +450,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get msgDemoModeStarted =>
-      'Modo de Prueba: ¡La sesión expira en 10 minutos! ⏳';
+      'Modo de Prueba: ¡La sesión expira en 10 minutos!';
 
   @override
-  String get msgDemoModeEnded =>
-      'El tiempo de prueba ha finalizado. ¡Gracias! 👋';
+  String get msgDemoModeEnded => 'El tiempo de prueba ha finalizado. ¡Gracias!';
 
   @override
   String get dialogDeleteServiceTitle => '¿Eliminar Servicio?';
@@ -500,4 +499,26 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get labelDefaultUser => 'Usuario';
+
+  @override
+  String get btnConfirmPayment => 'Confirmar Pago';
+
+  @override
+  String get msgPaymentConfirmed => '¡Pago confirmado!';
+
+  @override
+  String get msgServiceSaved => '¡Servicio guardado con éxito!';
+
+  @override
+  String get labelEstimatedTotal => 'Total Estimado';
+
+  @override
+  String get dialogDeleteExpenseTitle => '¿Eliminar Gasto?';
+
+  @override
+  String get dialogDeleteExpenseContent =>
+      '¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer.';
+
+  @override
+  String get msgExpenseDeleted => '¡Gasto eliminado con éxito!';
 }

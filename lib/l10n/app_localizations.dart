@@ -817,7 +817,7 @@ abstract class AppLocalizations {
   /// No description provided for @msgProfileUpdated.
   ///
   /// In pt, this message translates to:
-  /// **'Perfil atualizado com sucesso! ✅'**
+  /// **'Perfil atualizado com sucesso!'**
   String get msgProfileUpdated;
 
   /// No description provided for @labelNetBalance.
@@ -865,13 +865,13 @@ abstract class AppLocalizations {
   /// No description provided for @msgRemovedFromGoogle.
   ///
   /// In pt, this message translates to:
-  /// **'Removido da Agenda Google 📅'**
+  /// **'Removido da Agenda Google'**
   String get msgRemovedFromGoogle;
 
   /// No description provided for @msgAddedToGoogle.
   ///
   /// In pt, this message translates to:
-  /// **'Readicionado à Agenda Google 📅'**
+  /// **'Readicionado à Agenda Google'**
   String get msgAddedToGoogle;
 
   /// No description provided for @dialogReactivateTitle.
@@ -955,13 +955,13 @@ abstract class AppLocalizations {
   /// No description provided for @msgDemoModeStarted.
   ///
   /// In pt, this message translates to:
-  /// **'Modo Teste: Sessão expira em 10 minutos! ⏳'**
+  /// **'Modo Teste: Sessão expira em 10 minutos!'**
   String get msgDemoModeStarted;
 
   /// No description provided for @msgDemoModeEnded.
   ///
   /// In pt, this message translates to:
-  /// **'Tempo de teste finalizado. Obrigado! 👋'**
+  /// **'Tempo de teste finalizado. Obrigado!'**
   String get msgDemoModeEnded;
 
   /// No description provided for @dialogDeleteServiceTitle.
@@ -1047,6 +1047,48 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Usuário'**
   String get labelDefaultUser;
+
+  /// No description provided for @btnConfirmPayment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar Pagamento'**
+  String get btnConfirmPayment;
+
+  /// No description provided for @msgPaymentConfirmed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento confirmado!'**
+  String get msgPaymentConfirmed;
+
+  /// No description provided for @msgServiceSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Serviço salvo com sucesso!'**
+  String get msgServiceSaved;
+
+  /// No description provided for @labelEstimatedTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total Estimado'**
+  String get labelEstimatedTotal;
+
+  /// No description provided for @dialogDeleteExpenseTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir Despesa?'**
+  String get dialogDeleteExpenseTitle;
+
+  /// No description provided for @dialogDeleteExpenseContent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.'**
+  String get dialogDeleteExpenseContent;
+
+  /// No description provided for @msgExpenseDeleted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Despesa excluída com sucesso!'**
+  String get msgExpenseDeleted;
 }
 
 class _AppLocalizationsDelegate

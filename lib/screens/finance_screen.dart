@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/widgets/user_profile_menu.dart';
-import 'package:vlinix/screens/add_expense_screen.dart'; // Mude o caminho se necessário
+import 'package:vlinix/screens/add_expense_screen.dart';
 
 class FinanceScreen extends StatefulWidget {
   const FinanceScreen({super.key});
@@ -25,7 +25,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
   List<Map<String, dynamic>> _records = [];
 
   DateTime _selectedDate = DateTime.now();
-  String _selectedFilter = 'Todos';
+  String _selectedFilter = 'todos';
 
   @override
   void initState() {
@@ -80,6 +80,173 @@ class _FinanceScreenState extends State<FinanceScreen> {
     });
   }
 
+  // --- ATUALIZAR STATUS NO FINANCEIRO (RECEITAS) ---
+  Future<void> _updateAppointmentStatus(
+    int id,
+    String newStatus, {
+    String? paymentMethod,
+  }) async {
+    setState(() => _isLoading = true);
+    final lang = AppLocalizations.of(context)!;
+    try {
+      final Map<String, dynamic> updateData = {'status': newStatus};
+      if (paymentMethod != null) {
+        updateData['payment_method'] = paymentMethod;
+      }
+
+      if (newStatus == 'cancelado') {
+        updateData['google_event_id'] = null;
+      }
+
+      await Supabase.instance.client
+          .from('appointments')
+          .update(updateData)
+          .eq('id', id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newStatus == 'concluido'
+                  ? lang.msgPaymentConfirmed
+                  : lang.msgAppointmentCancelled,
+            ),
+            backgroundColor: newStatus == 'concluido'
+                ? AppColors.success
+                : Colors.grey,
+          ),
+        );
+      }
+
+      _loadFinanceData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(lang.msgErrorGeneric(e.toString())),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // --- NOVA FUNÇÃO: EXCLUIR DESPESA ---
+  Future<void> _deleteExpense(int id) async {
+    final lang = AppLocalizations.of(context)!;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(lang.dialogDeleteExpenseTitle), // CHAVE APLICADA
+        content: Text(lang.dialogDeleteExpenseContent), // CHAVE APLICADA
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              lang.btnCancel,
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(lang.btnDelete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.from('expenses').delete().eq('id', id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(lang.msgExpenseDeleted), // CHAVE APLICADA
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+      _loadFinanceData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(lang.msgErrorGeneric(e.toString())),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // --- DIÁLOGO DE PAGAMENTO COM CHAVES PADRONIZADAS ---
+  void _showPaymentDialog(int appointmentId) {
+    final lang = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return SimpleDialog(
+          title: Text(lang.dialogPaymentTitle),
+          children: [
+            _buildPaymentOption(
+              ctx,
+              appointmentId,
+              lang.paymentCash,
+              'dinheiro',
+              Icons.money,
+              Colors.green,
+            ),
+            _buildPaymentOption(
+              ctx,
+              appointmentId,
+              lang.paymentCard,
+              'cartao',
+              Icons.credit_card,
+              Colors.blue,
+            ),
+            _buildPaymentOption(
+              ctx,
+              appointmentId,
+              lang.paymentPlan,
+              'plano',
+              Icons.calendar_today,
+              Colors.purple,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  SimpleDialogOption _buildPaymentOption(
+    BuildContext ctx,
+    int id,
+    String label,
+    String internalValue,
+    IconData icon,
+    Color color,
+  ) {
+    return SimpleDialogOption(
+      padding: const EdgeInsets.all(15),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 10),
+          Text(label),
+        ],
+      ),
+      onPressed: () {
+        Navigator.pop(ctx);
+        _updateAppointmentStatus(id, 'concluido', paymentMethod: internalValue);
+      },
+    );
+  }
+
   Future<void> _loadFinanceData() async {
     setState(() => _isLoading = true);
 
@@ -100,10 +267,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
     final supabase = Supabase.instance.client;
 
     try {
-      // 1. LÓGICA DE BUSCA DE RECEITAS
       var queryRevenue = supabase
           .from('appointments')
           .select('''
+            id,
             start_time, 
             status,
             payment_method, 
@@ -114,7 +281,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
           .gte('start_time', startOfMonth)
           .lte('start_time', endOfMonth);
 
-      if (_selectedFilter == 'Pendentes') {
+      if (_selectedFilter == 'pendentes') {
         queryRevenue = queryRevenue.inFilter('status', const [
           'pendente',
           'em_andamento',
@@ -122,8 +289,26 @@ class _FinanceScreenState extends State<FinanceScreen> {
       } else {
         queryRevenue = queryRevenue.eq('status', 'concluido');
 
-        if (_selectedFilter != 'Todos') {
-          queryRevenue = queryRevenue.eq('payment_method', _selectedFilter);
+        if (_selectedFilter != 'todos') {
+          List<String> allowedValues = [];
+          if (_selectedFilter == 'dinheiro')
+            allowedValues = ['dinheiro', 'Dinheiro', 'Cash', 'Efectivo'];
+          else if (_selectedFilter == 'cartao')
+            allowedValues = ['cartao', 'Cartão', 'Card', 'Tarjeta'];
+          else if (_selectedFilter == 'plano')
+            allowedValues = [
+              'plano',
+              'Plano Mensal',
+              'Monthly Plan',
+              'Plan Mensual',
+            ];
+
+          if (allowedValues.isNotEmpty) {
+            queryRevenue = queryRevenue.inFilter(
+              'payment_method',
+              allowedValues,
+            );
+          }
         }
       }
 
@@ -131,7 +316,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
       // 2. BUSCAR DESPESAS
       List<dynamic> expensesData = [];
-      if (_selectedFilter == 'Todos') {
+      if (_selectedFilter == 'todos') {
         expensesData = await supabase
             .from('expenses')
             .select()
@@ -144,7 +329,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
       double expenseTotal = 0.0;
       final List<Map<String, dynamic>> combinedList = [];
 
-      // A. Processar Receitas (Concluídas ou Pendentes)
       for (var item in revenueData) {
         double appointmentTotal = 0.0;
         String serviceNames = '';
@@ -166,11 +350,11 @@ class _FinanceScreenState extends State<FinanceScreen> {
         }
 
         revenueTotal += appointmentTotal;
-
         final isPending =
             item['status'] == 'pendente' || item['status'] == 'em_andamento';
 
         combinedList.add({
+          'id': item['id'],
           'type': isPending ? 'pending' : 'income',
           'date': item['start_time'],
           'title': serviceNames,
@@ -178,14 +362,11 @@ class _FinanceScreenState extends State<FinanceScreen> {
               ? item['clients']['full_name']
               : 'Cliente?',
           'value': appointmentTotal,
-          // Vamos substituir o status e método no momento de renderizar o Card, usando a string traduzida,
-          // mas passamos uma flag aqui para facilitar
           'isPending': isPending,
           'rawMethod': item['payment_method'],
         });
       }
 
-      // B. Processar Despesas
       for (var item in expensesData) {
         final double val = (item['amount'] is int)
             ? (item['amount'] as int).toDouble()
@@ -193,9 +374,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
         expenseTotal += val;
 
         combinedList.add({
+          'id': item['id'], // <--- ADICIONADO PARA PERMITIR EXCLUIR
           'type': 'expense',
           'date': item['date'],
-          // Títulos traduzidos serão aplicados na renderização para facilitar
           'titleRaw': item['description'],
           'value': val,
         });
@@ -211,10 +392,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
           _totalRevenue = revenueTotal;
           _totalExpenses = expenseTotal;
 
-          if (_selectedFilter == 'Todos') {
+          if (_selectedFilter == 'todos') {
             _netBalance = revenueTotal - expenseTotal;
-          } else if (_selectedFilter == 'Pendentes') {
-            _netBalance = revenueTotal;
           } else {
             _netBalance = revenueTotal;
           }
@@ -249,6 +428,18 @@ class _FinanceScreenState extends State<FinanceScreen> {
     return AppColors.success;
   }
 
+  String _getTopBannerText(AppLocalizations lang) {
+    if (_selectedFilter == 'todos') return lang.labelNetBalance;
+    if (_selectedFilter == 'pendentes') return lang.labelTotalReceivable;
+    if (_selectedFilter == 'dinheiro')
+      return lang.labelTotal(lang.paymentCash.toUpperCase());
+    if (_selectedFilter == 'cartao')
+      return lang.labelTotal(lang.paymentCard.toUpperCase());
+    if (_selectedFilter == 'plano')
+      return lang.labelTotal(lang.paymentPlan.toUpperCase());
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final lang = AppLocalizations.of(context)!;
@@ -265,7 +456,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
         centerTitle: true,
       ),
 
-      floatingActionButton: _selectedFilter == 'Todos'
+      floatingActionButton: _selectedFilter == 'todos'
           ? FloatingActionButton(
               heroTag: 'fab_expenses',
               onPressed: () async {
@@ -284,7 +475,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
       body: Column(
         children: [
-          // 1. SELETOR DE MÊS
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10),
             color: Colors.white,
@@ -345,29 +535,24 @@ class _FinanceScreenState extends State<FinanceScreen> {
             ),
           ),
 
-          // 2. FILTROS HORIZONTAIS
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                _buildFilterChip('Todos', lang.filterAll),
+                _buildFilterChip('todos', lang.filterAll),
                 const SizedBox(width: 8),
-                _buildFilterChip(
-                  'Pendentes',
-                  lang.filterPending,
-                ), // CHAVE APLICADA
+                _buildFilterChip('pendentes', lang.filterPending),
                 const SizedBox(width: 8),
-                _buildFilterChip('Dinheiro', lang.paymentCash),
+                _buildFilterChip('dinheiro', lang.paymentCash),
                 const SizedBox(width: 8),
-                _buildFilterChip('Cartão', lang.paymentCard),
+                _buildFilterChip('cartao', lang.paymentCard),
                 const SizedBox(width: 8),
-                _buildFilterChip('Plano Mensal', lang.paymentPlan),
+                _buildFilterChip('plano', lang.paymentPlan),
               ],
             ),
           ),
 
-          // 3. PLACAR TOTAL
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             padding: const EdgeInsets.all(24),
@@ -390,15 +575,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
             child: Column(
               children: [
                 Text(
-                  _selectedFilter == 'Todos'
-                      ? lang
-                            .labelNetBalance // CHAVE APLICADA
-                      : _selectedFilter == 'Pendentes'
-                      ? lang
-                            .labelTotalReceivable // CHAVE APLICADA
-                      : lang.labelTotal(
-                          _selectedFilter.toUpperCase(),
-                        ), // CHAVE APLICADA
+                  _getTopBannerText(lang),
                   style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
@@ -412,7 +589,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                     : Text(
                         _formatCurrency(_netBalance),
                         style: TextStyle(
-                          color: _selectedFilter == 'Pendentes'
+                          color: _selectedFilter == 'pendentes'
                               ? Colors.orange
                               : (_netBalance >= 0
                                     ? AppColors.accent
@@ -423,7 +600,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       ),
                 const SizedBox(height: 16),
 
-                if (!_isLoading && _selectedFilter == 'Todos')
+                if (!_isLoading && _selectedFilter == 'todos')
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -466,7 +643,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
             ),
           ),
 
-          // 4. LISTA
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -499,8 +675,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       final isExpense = item['type'] == 'expense';
                       final isPending = item['type'] == 'pending';
                       final valColor = _getTypeColor(item['type']);
+                      final int? itemId = item['id'];
 
-                      // Lógica para traduzir o item corretamente
                       String displayTitle = '';
                       String displaySubtitle = '';
                       String displayMethod = '';
@@ -513,12 +689,37 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       } else {
                         displayTitle = item['title'];
                         displaySubtitle = item['subtitle'];
+
                         if (isPending) {
                           displayMethod = lang.statusAwaitingPayment;
                         } else {
-                          displayMethod =
-                              item['rawMethod'] ??
-                              lang.labelWithoutRegistration;
+                          final rawMethod = item['rawMethod'];
+                          if (rawMethod == null) {
+                            displayMethod = lang.labelWithoutRegistration;
+                          } else if ([
+                            'dinheiro',
+                            'Dinheiro',
+                            'Cash',
+                            'Efectivo',
+                          ].contains(rawMethod)) {
+                            displayMethod = lang.paymentCash;
+                          } else if ([
+                            'cartao',
+                            'Cartão',
+                            'Card',
+                            'Tarjeta',
+                          ].contains(rawMethod)) {
+                            displayMethod = lang.paymentCard;
+                          } else if ([
+                            'plano',
+                            'Plano Mensal',
+                            'Monthly Plan',
+                            'Plan Mensual',
+                          ].contains(rawMethod)) {
+                            displayMethod = lang.paymentPlan;
+                          } else {
+                            displayMethod = rawMethod;
+                          }
                         }
                       }
 
@@ -608,6 +809,81 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                   ),
                               ],
                             ),
+
+                            // --- MENU PARA PENDENTES E AGORA PARA DESPESAS ---
+                            if (isPending && itemId != null)
+                              PopupMenuButton<String>(
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  color: Colors.grey,
+                                ),
+                                onSelected: (value) {
+                                  if (value == 'pay') {
+                                    _showPaymentDialog(itemId);
+                                  } else if (value == 'cancel') {
+                                    _updateAppointmentStatus(
+                                      itemId,
+                                      'cancelado',
+                                    );
+                                  }
+                                },
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value: 'pay',
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle,
+                                          color: AppColors.success,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(lang.btnConfirmPayment),
+                                      ],
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'cancel',
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.cancel,
+                                          color: AppColors.error,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(lang.btnCancelAppointment),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                            // <--- ADIÇÃO DO BOTÃO DE EXCLUIR NA DESPESA --->
+                            else if (isExpense && itemId != null)
+                              PopupMenuButton<String>(
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  color: Colors.grey,
+                                ),
+                                onSelected: (value) {
+                                  if (value == 'delete') {
+                                    _deleteExpense(itemId);
+                                  }
+                                },
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.delete,
+                                          color: AppColors.error,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(lang.btnDelete),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                           ],
                         ),
                       );

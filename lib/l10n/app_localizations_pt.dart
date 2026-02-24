@@ -377,7 +377,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get msgErrorCleanupAvatar => 'Erro não crítico na limpeza';
 
   @override
-  String get msgProfileUpdated => 'Perfil atualizado com sucesso! ✅';
+  String get msgProfileUpdated => 'Perfil atualizado com sucesso!';
 
   @override
   String get labelNetBalance => 'SALDO LÍQUIDO';
@@ -401,10 +401,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get labelWithoutRegistration => 'Sem registro';
 
   @override
-  String get msgRemovedFromGoogle => 'Removido da Agenda Google 📅';
+  String get msgRemovedFromGoogle => 'Removido da Agenda Google';
 
   @override
-  String get msgAddedToGoogle => 'Readicionado à Agenda Google 📅';
+  String get msgAddedToGoogle => 'Readicionado à Agenda Google';
 
   @override
   String get dialogReactivateTitle => 'Reativar Agendamento?';
@@ -447,10 +447,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get btnCreateAccountNow => 'Criar conta agora';
 
   @override
-  String get msgDemoModeStarted => 'Modo Teste: Sessão expira em 10 minutos! ⏳';
+  String get msgDemoModeStarted => 'Modo Teste: Sessão expira em 10 minutos!';
 
   @override
-  String get msgDemoModeEnded => 'Tempo de teste finalizado. Obrigado! 👋';
+  String get msgDemoModeEnded => 'Tempo de teste finalizado. Obrigado!';
 
   @override
   String get dialogDeleteServiceTitle => 'Excluir Serviço?';
@@ -495,4 +495,26 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get labelDefaultUser => 'Usuário';
+
+  @override
+  String get btnConfirmPayment => 'Confirmar Pagamento';
+
+  @override
+  String get msgPaymentConfirmed => 'Pagamento confirmado!';
+
+  @override
+  String get msgServiceSaved => 'Serviço salvo com sucesso!';
+
+  @override
+  String get labelEstimatedTotal => 'Total Estimado';
+
+  @override
+  String get dialogDeleteExpenseTitle => 'Excluir Despesa?';
+
+  @override
+  String get dialogDeleteExpenseContent =>
+      'Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.';
+
+  @override
+  String get msgExpenseDeleted => 'Despesa excluída com sucesso!';
 }

@@ -377,7 +377,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get msgErrorCleanupAvatar => 'Non-critical error during cleanup';
 
   @override
-  String get msgProfileUpdated => 'Profile updated successfully! ✅';
+  String get msgProfileUpdated => 'Profile updated successfully!';
 
   @override
   String get labelNetBalance => 'NET BALANCE';
@@ -401,10 +401,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelWithoutRegistration => 'Unregistered';
 
   @override
-  String get msgRemovedFromGoogle => 'Removed from Google Calendar 📅';
+  String get msgRemovedFromGoogle => 'Removed from Google Calendar';
 
   @override
-  String get msgAddedToGoogle => 'Re-added to Google Calendar 📅';
+  String get msgAddedToGoogle => 'Re-added to Google Calendar';
 
   @override
   String get dialogReactivateTitle => 'Reactivate Appointment?';
@@ -447,11 +447,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get btnCreateAccountNow => 'Create account now';
 
   @override
-  String get msgDemoModeStarted =>
-      'Test Mode: Session expires in 10 minutes! ⏳';
+  String get msgDemoModeStarted => 'Test Mode: Session expires in 10 minutes!';
 
   @override
-  String get msgDemoModeEnded => 'Test time has ended. Thank you! 👋';
+  String get msgDemoModeEnded => 'Test time has ended. Thank you!';
 
   @override
   String get dialogDeleteServiceTitle => 'Delete Service?';
@@ -496,4 +495,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get labelDefaultUser => 'User';
+
+  @override
+  String get btnConfirmPayment => 'Confirm Payment';
+
+  @override
+  String get msgPaymentConfirmed => 'Payment confirmed!';
+
+  @override
+  String get msgServiceSaved => 'Service saved successfully!';
+
+  @override
+  String get labelEstimatedTotal => 'Estimated Total';
+
+  @override
+  String get dialogDeleteExpenseTitle => 'Delete Expense?';
+
+  @override
+  String get dialogDeleteExpenseContent =>
+      'Are you sure you want to delete this expense? This action cannot be undone.';
+
+  @override
+  String get msgExpenseDeleted => 'Expense deleted successfully!';
 }

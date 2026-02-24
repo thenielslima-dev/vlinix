@@ -157,5 +157,12 @@
     "msgAccountCreated": "Conta criada! Bem-vindo.",
     "btnSignUp": "CADASTRAR",
     "hintEmailExample": "exemplo@email.com",
-    "labelDefaultUser": "Usuário"
+    "labelDefaultUser": "Usuário",
+    "btnConfirmPayment": "Confirmar Pagamento",
+    "msgPaymentConfirmed": "Pagamento confirmado!",
+    "msgServiceSaved": "Serviço salvo com sucesso!",
+    "labelEstimatedTotal": "Total Estimado",
+    "dialogDeleteExpenseTitle": "Excluir Despesa?",
+    "dialogDeleteExpenseContent": "Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.",
+    "msgExpenseDeleted": "Despesa excluída com sucesso!"
 }

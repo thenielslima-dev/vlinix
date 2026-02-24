@@ -157,5 +157,12 @@
     "msgAccountCreated": "Account created! Welcome.",
     "btnSignUp": "SIGN UP",
     "hintEmailExample": "example@email.com",
-    "labelDefaultUser": "User"
+    "labelDefaultUser": "User",
+    "btnConfirmPayment": "Confirm Payment",
+    "msgPaymentConfirmed": "Payment confirmed!",
+    "msgServiceSaved": "Service saved successfully!",
+    "labelEstimatedTotal": "Estimated Total",
+    "dialogDeleteExpenseTitle": "Delete Expense?",
+    "dialogDeleteExpenseContent": "Are you sure you want to delete this expense? This action cannot be undone.",
+    "msgExpenseDeleted": "Expense deleted successfully!"
 }

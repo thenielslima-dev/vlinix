@@ -5,7 +5,6 @@ import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/services/google_calendar_service.dart';
 
-// Importe para o botão de atalho do Cliente funcionar
 import 'add_client_screen.dart';
 import 'add_service_screen.dart';
 
@@ -174,7 +173,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                               ),
                             ),
                             subtitle: Text(
-                              '${NumberFormat.simpleCurrency(name: '').currencySymbol} ${service['price']}', // Alterado para ser dinâmico ou fixo conforme a formatação local
+                              '${NumberFormat.simpleCurrency(name: '').currencySymbol} ${service['price']}',
                               style: TextStyle(color: Colors.grey[600]),
                             ),
                             activeColor: AppColors.accent,
@@ -267,7 +266,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
       final googleTitle = 'Vlinix: $servicesNames - $clientName';
       final googleDesc =
-          'Serviços: $servicesNames\nTotal: ${NumberFormat.simpleCurrency(name: '').currencySymbol} $_totalPrice'; // Modificado para não fixar o R$
+          'Serviços: $servicesNames\nTotal: ${NumberFormat.simpleCurrency(name: '').currencySymbol} $_totalPrice';
 
       String? googleEventId;
       if (widget.appointmentToEdit == null) {
@@ -331,7 +330,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(lang.msgAppointmentSaved), // NOVA CHAVE
+            content: Text(lang.msgAppointmentSaved),
             backgroundColor: AppColors.success,
           ),
         );
@@ -341,9 +340,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              lang.msgErrorGeneric(e.toString()),
-            ), // NOVA CHAVE COM PARÂMETRO
+            content: Text(lang.msgErrorGeneric(e.toString())),
             backgroundColor: AppColors.error,
           ),
         );
@@ -368,7 +365,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              lang.msgAlmostThere, // NOVA CHAVE
+              lang.msgAlmostThere,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -377,7 +374,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              lang.msgNeedClientAndService, // NOVA CHAVE
+              lang.msgNeedClientAndService,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             ),
@@ -388,7 +385,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                 height: 45,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.person_add),
-                  label: Text(lang.btnRegisterClient), // NOVA CHAVE
+                  label: Text(lang.btnRegisterClient),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                   ),
@@ -410,7 +407,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                 height: 45,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.design_services),
-                  label: Text(lang.btnRegisterService), // NOVA CHAVE
+                  label: Text(lang.btnRegisterService),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
                   ),
@@ -438,9 +435,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          isEditing ? lang.titleEditClient : lang.btnNew,
-        ), // Mantive titleEditClient aqui, assumindo que você usa a mesma chave para edição de telas
+        title: Text(isEditing ? lang.titleEditClient : lang.btnNew),
         centerTitle: true,
       ),
       backgroundColor: AppColors.background,
@@ -509,7 +504,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                                 (v) => DropdownMenuItem(
                                   value: v['id'] as int,
                                   child: Text(
-                                    '${v['model']} - ${v['category'] ?? lang.labelCategoryNoCategory}', // NOVA CHAVE
+                                    '${v['model']} - ${v['category'] ?? lang.labelCategoryNoCategory}',
                                   ),
                                 ),
                               )
@@ -519,7 +514,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                               : (value) =>
                                     setState(() => _selectedVehicleId = value),
                           hint: _selectedClientId == null
-                              ? Text(lang.msgSelectClientFirst) // NOVA CHAVE
+                              ? Text(lang.msgSelectClientFirst)
                               : null,
                         ),
                         const SizedBox(height: 16),
@@ -566,7 +561,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: Text(
-                                '${lang.labelTotal}: ${NumberFormat.simpleCurrency(name: '').currencySymbol} $_totalPrice', // Removido R$ fixo
+                                '${lang.labelEstimatedTotal}: ${NumberFormat.simpleCurrency(name: '').currencySymbol} $_totalPrice', // <--- CORREÇÃO AQUI
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -586,7 +581,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                                 ),
                                 label: Text(
                                   DateFormat(
-                                    'dd/MM/yyyy', // Pode ser interessante mudar o formato dependendo do Locale futuramente
+                                    'dd/MM/yyyy',
                                   ).format(_selectedDate),
                                   style: const TextStyle(
                                     color: AppColors.primary,

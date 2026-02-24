@@ -29,7 +29,6 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
   @override
   void initState() {
     super.initState();
-    // Se veio um serviço para editar, preenche os campos
     if (widget.serviceToEdit != null) {
       _nameController.text = widget.serviceToEdit!['name'];
       _priceController.text = widget.serviceToEdit!['price'].toString();
@@ -43,7 +42,6 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
     super.dispose();
   }
 
-  // --- FUNÇÃO PARA APLICAR O TEMPLATE ---
   void _applyTemplate(String name, String price) {
     setState(() {
       _nameController.text = name;
@@ -54,9 +52,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          lang.msgTemplateApplied(name),
-        ), // NOVA CHAVE COM PARÂMETRO
+        content: Text(lang.msgTemplateApplied(name)),
         duration: const Duration(seconds: 1),
         backgroundColor: AppColors.primary,
       ),
@@ -67,9 +63,9 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
     final lang = AppLocalizations.of(context)!;
 
     if (_nameController.text.isEmpty || _priceController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(lang.msgFillAllFields)), // Chave existente!
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(lang.msgFillAllFields)));
       return;
     }
 
@@ -88,10 +84,8 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
       };
 
       if (widget.serviceToEdit == null) {
-        // Criar Novo
         await Supabase.instance.client.from('services').insert(data);
       } else {
-        // Editar Existente
         await Supabase.instance.client
             .from('services')
             .update(data)
@@ -102,20 +96,18 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              lang.msgClientUpdated,
-            ), // Usando uma genérica de sucesso que você já tem (ou pode criar uma "msgServiceSaved")
+              lang.msgServiceSaved, // <--- CORREÇÃO AQUI
+            ),
             backgroundColor: AppColors.success,
           ),
         );
-        Navigator.pop(context); // Volta para a lista
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              lang.msgErrorGeneric(e.toString()),
-            ), // CHAVE CRIADA HOJE
+            content: Text(lang.msgErrorGeneric(e.toString())),
             backgroundColor: AppColors.error,
           ),
         );
@@ -130,15 +122,11 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
     final lang = AppLocalizations.of(context)!;
     final isEditing = widget.serviceToEdit != null;
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
-
-    // Puxa o símbolo de moeda baseado na língua ativa (pt = R$, en/es = $)
     final currencySymbol = lang.localeName == 'pt' ? 'R\$' : '\$';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          isEditing ? lang.btnEdit : lang.btnNew,
-        ), // Melhor reaproveitar chaves existentes
+        title: Text(isEditing ? lang.btnEdit : lang.btnNew),
         centerTitle: true,
       ),
       backgroundColor: AppColors.background,
@@ -178,11 +166,9 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                     ),
                     const SizedBox(height: 20),
                   ],
-
-                  // --- SESSÃO DE TEMPLATES ---
                   if (!isEditing) ...[
                     Text(
-                      lang.titleQuickTemplates, // NOVA CHAVE
+                      lang.titleQuickTemplates,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -203,7 +189,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           label: Text(
-                            template['name'], // Você pode querer traduzir esses templates futuramente no banco
+                            template['name'],
                             style: const TextStyle(
                               color: AppColors.primary,
                               fontSize: 12,
@@ -222,8 +208,6 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                       child: Divider(),
                     ),
                   ],
-
-                  // Campo Nome
                   TextField(
                     controller: _nameController,
                     decoration: InputDecoration(
@@ -232,23 +216,17 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Campo Preço
                   TextField(
                     controller: _priceController,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
                     decoration: InputDecoration(
-                      labelText:
-                          '${lang.labelPrice} ($currencySymbol)', // NOVA CHAVE + MOEDA DINÂMICA
+                      labelText: '${lang.labelPrice} ($currencySymbol)',
                       prefixIcon: const Icon(Icons.attach_money),
                     ),
                   ),
-
                   const SizedBox(height: 32),
-
-                  // Botão Salvar
                   SizedBox(
                     width: double.infinity,
                     height: 50,
