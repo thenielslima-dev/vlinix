@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vlinix/main.dart';
 import 'package:vlinix/theme/app_colors.dart';
-import 'package:vlinix/l10n/app_localizations.dart'; // <--- IMPORTADO
+import 'package:vlinix/l10n/app_localizations.dart';
 import 'main_screen.dart';
 import 'signup_screen.dart';
 
@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _googleSignIn() async {
     setState(() => _isLoading = true);
-    final lang = AppLocalizations.of(context)!; // Pegando o lang aqui
+    final lang = AppLocalizations.of(context)!;
 
     try {
       await Supabase.instance.client.auth.signInWithOAuth(
@@ -54,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(lang.msgErrorGoogleLogin), // CHAVE APLICADA
+            content: Text(lang.msgErrorGoogleLogin),
             backgroundColor: AppColors.error,
           ),
         );
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signIn() async {
     setState(() => _isLoading = true);
-    final lang = AppLocalizations.of(context)!; // Pegando o lang aqui
+    final lang = AppLocalizations.of(context)!;
 
     try {
       await Supabase.instance.client.auth.signInWithPassword(
@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(lang.msgErrorUnexpected), // CHAVE APLICADA
+            content: Text(lang.msgErrorUnexpected),
             backgroundColor: AppColors.error,
           ),
         );
@@ -94,12 +94,13 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
-    final lang = AppLocalizations.of(
-      context,
-    )!; // <--- NOVO: PEGANDO O LANG NO BUILD
+    final lang = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      // --- MUDANÇA 1: GARANTIR O REDIMENSIONAMENTO COM O TECLADO ---
+      resizeToAvoidBottomInset: true,
+
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -120,177 +121,189 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
 
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Center(
-            child: Container(
-              width: isLargeScreen ? 400 : double.infinity,
-              padding: isLargeScreen
-                  ? const EdgeInsets.all(40)
-                  : EdgeInsets.zero,
-              decoration: isLargeScreen
-                  ? BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                      border: Border.all(color: Colors.grey.shade200),
-                    )
-                  : null,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Hero(
-                    tag: 'app_logo',
-                    child: Image.asset(
-                      'assets/images/logo_symbol.png',
-                      height: 150,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.directions_car_filled,
-                          size: 80,
-                          color: AppColors.primary,
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: const TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'V-Linix\n',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            height: 1.4,
+      // --- MUDANÇA 2: SafeArea PROTEGE CONTRA AS BORDAS DO CELULAR ---
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Center(
+              child: Container(
+                width: isLargeScreen ? 400 : double.infinity,
+                padding: isLargeScreen
+                    ? const EdgeInsets.all(40)
+                    : EdgeInsets.zero,
+                decoration: isLargeScreen
+                    ? BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
                           ),
-                        ),
-                        TextSpan(
-                          text: 'Auto Detailing Solutions',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+                        ],
+                        border: Border.all(color: Colors.grey.shade200),
+                      )
+                    : null,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // --- MUDANÇA 3: AMORTECEDOR DE ESPAÇO NO TOPO ---
+                    const SizedBox(height: 40),
 
-                  if (!_isLoading) ...[
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.login, color: AppColors.primary),
-                        label: Text(lang.btnLoginGoogle), // CHAVE APLICADA
-                        onPressed: _googleSignIn,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.accent),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                    Hero(
+                      tag: 'app_logo',
+                      child: Image.asset(
+                        'assets/images/logo_symbol.png',
+                        height: 150,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.directions_car_filled,
+                            size: 80,
+                            color: AppColors.primary,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: const TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'V-Linix\n',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              height: 1.4,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'Auto Detailing Solutions',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+
+                    if (!_isLoading) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(
+                            Icons.login,
+                            color: AppColors.primary,
+                          ),
+                          label: Text(lang.btnLoginGoogle),
+                          onPressed: _googleSignIn,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.accent),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(
-                            lang.labelOr, // CHAVE APLICADA
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[400],
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              lang.labelOr,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[400],
+                              ),
                             ),
                           ),
-                        ),
-                        const Expanded(child: Divider()),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
 
-                  TextField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: lang.labelEmail, // Chave já existente
-                      prefixIcon: const Icon(Icons.email_outlined),
+                    TextField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: lang.labelEmail,
+                        prefixIcon: const Icon(Icons.email_outlined),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
                     ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: lang.labelPassword, // CHAVE APLICADA
-                      prefixIcon: const Icon(Icons.lock_outline),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: lang.labelPassword,
+                        prefixIcon: const Icon(Icons.lock_outline),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  _isLoading
-                      ? const CircularProgressIndicator(color: AppColors.accent)
-                      : Column(
-                          children: [
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
-                                onPressed: _signIn,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
+                    _isLoading
+                        ? const CircularProgressIndicator(
+                            color: AppColors.accent,
+                          )
+                        : Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: _signIn,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    lang.btnLogin,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1,
+                                    ),
                                   ),
                                 ),
+                              ),
+                              const SizedBox(height: 16),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SignUpScreen(),
+                                    ),
+                                  );
+                                },
                                 child: Text(
-                                  lang.btnLogin, // CHAVE APLICADA
+                                  lang.btnCreateAccountNow,
                                   style: const TextStyle(
+                                    color: AppColors.accent,
                                     fontWeight: FontWeight.bold,
-                                    letterSpacing: 1,
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const SignUpScreen(),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                lang.btnCreateAccountNow, // CHAVE APLICADA
-                                style: const TextStyle(
-                                  color: AppColors.accent,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                ],
+                            ],
+                          ),
+                  ],
+                ),
               ),
             ),
           ),
