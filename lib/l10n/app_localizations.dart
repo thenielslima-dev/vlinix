@@ -1107,6 +1107,138 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Despesa salva com sucesso!'**
   String get msgExpenseSaved;
+
+  /// No description provided for @msgGeneratingExcel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gerando arquivo Excel...'**
+  String get msgGeneratingExcel;
+
+  /// No description provided for @msgExcelSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvo em: Documentos/VLINIX_Financeiro_{monthStr}.xlsx'**
+  String msgExcelSaved(String monthStr);
+
+  /// No description provided for @msgExportWebNotSupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Exportação Web não configurada ainda.'**
+  String get msgExportWebNotSupported;
+
+  /// No description provided for @msgExportError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao exportar: {error}'**
+  String msgExportError(String error);
+
+  /// No description provided for @tooltipExportExcel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Exportar Excel'**
+  String get tooltipExportExcel;
+
+  /// No description provided for @excelSheetAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos'**
+  String get excelSheetAll;
+
+  /// No description provided for @excelSheetReceivable.
+  ///
+  /// In pt, this message translates to:
+  /// **'A Receber'**
+  String get excelSheetReceivable;
+
+  /// No description provided for @excelSheetCash.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dinheiro'**
+  String get excelSheetCash;
+
+  /// No description provided for @excelSheetCard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cartão'**
+  String get excelSheetCard;
+
+  /// No description provided for @excelSheetExpenses.
+  ///
+  /// In pt, this message translates to:
+  /// **'Despesas'**
+  String get excelSheetExpenses;
+
+  /// No description provided for @excelColDate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Data'**
+  String get excelColDate;
+
+  /// No description provided for @excelColType.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tipo'**
+  String get excelColType;
+
+  /// No description provided for @excelColDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descrição / Serviços'**
+  String get excelColDesc;
+
+  /// No description provided for @excelColClient.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cliente / Subtítulo'**
+  String get excelColClient;
+
+  /// No description provided for @excelColMethod.
+  ///
+  /// In pt, this message translates to:
+  /// **'Método / Status'**
+  String get excelColMethod;
+
+  /// No description provided for @excelColValue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor'**
+  String get excelColValue;
+
+  /// No description provided for @excelTypeExpense.
+  ///
+  /// In pt, this message translates to:
+  /// **'Despesa'**
+  String get excelTypeExpense;
+
+  /// No description provided for @excelTypePending.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pendente'**
+  String get excelTypePending;
+
+  /// No description provided for @excelTypeIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Receita'**
+  String get excelTypeIncome;
+
+  /// No description provided for @excelStatusWaiting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguardando'**
+  String get excelStatusWaiting;
+
+  /// No description provided for @excelTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'TOTAL:'**
+  String get excelTotal;
+
+  /// No description provided for @msgExcelDownloadStarted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Download iniciado: {filename}'**
+  String msgExcelDownloadStarted(String filename);
 }
 
 class _AppLocalizationsDelegate

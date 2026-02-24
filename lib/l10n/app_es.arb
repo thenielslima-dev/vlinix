@@ -170,5 +170,48 @@
     "labelDescription": "Motivo / Descripción",
     "labelDate": "Fecha: ",
     "btnAddExpense": "AÑADIR GASTO",
-    "msgExpenseSaved": "¡Gasto guardado con éxito!"
+    "msgExpenseSaved": "¡Gasto guardado con éxito!",
+    "msgGeneratingExcel": "Generando archivo Excel...",
+    "msgExcelSaved": "Guardado en: Documentos/VLINIX_Finanzas_{monthStr}.xlsx",
+    "@msgExcelSaved": {
+      "placeholders": {
+        "monthStr": {
+          "type": "String"
+        }
+      }
+    },
+    "msgExportWebNotSupported": "Exportación Web aún no configurada.",
+    "msgExportError": "Error al exportar: {error}",
+    "@msgExportError": {
+      "placeholders": {
+        "error": {
+          "type": "String"
+        }
+      }
+    },
+    "tooltipExportExcel": "Exportar a Excel",
+    "excelSheetAll": "Todos",
+    "excelSheetReceivable": "Por Cobrar",
+    "excelSheetCash": "Efectivo",
+    "excelSheetCard": "Tarjeta",
+    "excelSheetExpenses": "Gastos",
+    "excelColDate": "Fecha",
+    "excelColType": "Tipo",
+    "excelColDesc": "Descripción / Servicios",
+    "excelColClient": "Cliente / Subtítulo",
+    "excelColMethod": "Método / Estado",
+    "excelColValue": "Valor",
+    "excelTypeExpense": "Gasto",
+    "excelTypePending": "Pendiente",
+    "excelTypeIncome": "Ingreso",
+    "excelStatusWaiting": "Esperando",
+    "excelTotal": "TOTAL:",
+    "msgExcelDownloadStarted": "Descarga iniciada: {filename}",
+    "@msgExcelDownloadStarted": {
+      "placeholders": {
+        "filename": {
+          "type": "String"
+        }
+      }
+    }
 }

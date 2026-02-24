@@ -1,10 +1,15 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart'; // Para kIsWeb
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:excel/excel.dart' hide Border;
+import 'package:path_provider/path_provider.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/widgets/user_profile_menu.dart';
 import 'package:vlinix/screens/add_expense_screen.dart';
+import 'package:universal_html/html.dart' as html; // <--- ADICIONADO PARA WEB
 
 class FinanceScreen extends StatefulWidget {
   const FinanceScreen({super.key});
@@ -132,14 +137,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
     }
   }
 
-  // --- NOVA FUNÇÃO: EXCLUIR DESPESA ---
+  // --- EXCLUIR DESPESA ---
   Future<void> _deleteExpense(int id) async {
     final lang = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(lang.dialogDeleteExpenseTitle), // CHAVE APLICADA
-        content: Text(lang.dialogDeleteExpenseContent), // CHAVE APLICADA
+        title: Text(lang.dialogDeleteExpenseTitle),
+        content: Text(lang.dialogDeleteExpenseContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -165,7 +170,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(lang.msgExpenseDeleted), // CHAVE APLICADA
+            content: Text(lang.msgExpenseDeleted),
             backgroundColor: AppColors.success,
           ),
         );
@@ -184,7 +189,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
     }
   }
 
-  // --- DIÁLOGO DE PAGAMENTO COM CHAVES PADRONIZADAS ---
+  // --- DIÁLOGO DE PAGAMENTO ---
   void _showPaymentDialog(int appointmentId) {
     final lang = AppLocalizations.of(context)!;
     showDialog(
@@ -374,7 +379,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
         expenseTotal += val;
 
         combinedList.add({
-          'id': item['id'], // <--- ADICIONADO PARA PERMITIR EXCLUIR
+          'id': item['id'],
           'type': 'expense',
           'date': item['date'],
           'titleRaw': item['description'],
@@ -405,6 +410,277 @@ class _FinanceScreenState extends State<FinanceScreen> {
     } catch (e) {
       debugPrint('Erro Financeiro: $e');
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // --- FUNÇÃO DE EXPORTAR PARA EXCEL (100% TRADUZIDA E ESTILIZADA) ---
+  // --- FUNÇÃO DE EXPORTAR PARA EXCEL (100% TRADUZIDA E ESTILIZADA E SEM ERROS) ---
+  // --- FUNÇÃO DE EXPORTAR PARA EXCEL (100% TRADUZIDA, ESTILIZADA E COMPATÍVEL COM WEB/MOBILE) ---
+  Future<void> _exportToExcel() async {
+    final lang = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).languageCode;
+    final currencySymbol = locale == 'pt' ? 'R\$' : '\$';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(lang.msgGeneratingExcel),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    try {
+      var excel = Excel.createExcel();
+
+      for (var sheetName in excel.tables.keys.toList()) {
+        excel.delete(sheetName);
+      }
+
+      void populateSheet(String sheetName, String filterType) {
+        Sheet sheet = excel[sheetName];
+
+        // --- ESTILO DO CABEÇALHO ---
+        CellStyle headerStyle = CellStyle(
+          bold: true,
+          fontColorHex: ExcelColor.white,
+          backgroundColorHex: ExcelColor.blue,
+          horizontalAlign: HorizontalAlign.Center,
+        );
+
+        var headers = [
+          lang.excelColDate,
+          lang.excelColType,
+          lang.excelColDesc,
+          lang.excelColClient,
+          lang.excelColMethod,
+          '${lang.excelColValue} ($currencySymbol)',
+        ];
+
+        // Aplicando as colunas do Cabeçalho com o Estilo
+        for (var i = 0; i < headers.length; i++) {
+          var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
+          );
+          cell.value = TextCellValue(headers[i]);
+          cell.cellStyle = headerStyle;
+        }
+
+        // Filtro de Dados
+        List<Map<String, dynamic>> filteredList = [];
+
+        if (filterType == 'Todos') {
+          filteredList = _records;
+        } else if (filterType == 'A Receber') {
+          filteredList = _records
+              .where((item) => item['type'] == 'pending')
+              .toList();
+        } else if (filterType == 'Dinheiro') {
+          filteredList = _records
+              .where(
+                (item) =>
+                    item['type'] == 'income' &&
+                    [
+                      'dinheiro',
+                      'Dinheiro',
+                      'Cash',
+                      'Efectivo',
+                    ].contains(item['rawMethod']),
+              )
+              .toList();
+        } else if (filterType == 'Cartão') {
+          filteredList = _records
+              .where(
+                (item) =>
+                    item['type'] == 'income' &&
+                    [
+                      'cartao',
+                      'Cartão',
+                      'Card',
+                      'Tarjeta',
+                    ].contains(item['rawMethod']),
+              )
+              .toList();
+        } else if (filterType == 'Despesas') {
+          filteredList = _records
+              .where((item) => item['type'] == 'expense')
+              .toList();
+        }
+
+        double totalSheetValue = 0.0;
+
+        // Popula as linhas a partir do índice 1 (abaixo do cabeçalho)
+        for (int row = 0; row < filteredList.length; row++) {
+          var item = filteredList[row];
+          final isExpense = item['type'] == 'expense';
+          final isPending = item['type'] == 'pending';
+
+          String data = DateFormat(
+            'dd/MM/yyyy',
+            locale,
+          ).format(DateTime.parse(item['date']).toLocal());
+          String tipo = isExpense
+              ? lang.excelTypeExpense
+              : (isPending ? lang.excelTypePending : lang.excelTypeIncome);
+          String titulo = isExpense
+              ? (item['titleRaw'] ?? lang.labelExpenseTitle)
+              : item['title'];
+          String subtitulo = isExpense
+              ? lang.labelExpenseSubtitle
+              : item['subtitle'];
+
+          String metodo = '';
+          if (isExpense) {
+            metodo = '-';
+          } else if (isPending) {
+            metodo = lang.excelStatusWaiting;
+          } else {
+            // Traduz a forma de pagamento do banco para o Excel
+            final rawMethod = item['rawMethod'];
+            if (rawMethod == null) {
+              metodo = lang.labelWithoutRegistration;
+            } else if ([
+              'dinheiro',
+              'Dinheiro',
+              'Cash',
+              'Efectivo',
+            ].contains(rawMethod)) {
+              metodo = lang.paymentCash;
+            } else if ([
+              'cartao',
+              'Cartão',
+              'Card',
+              'Tarjeta',
+            ].contains(rawMethod)) {
+              metodo = lang.paymentCard;
+            } else if ([
+              'plano',
+              'Plano Mensal',
+              'Monthly Plan',
+              'Plan Mensual',
+            ].contains(rawMethod)) {
+              metodo = lang.paymentPlan;
+            } else {
+              metodo = rawMethod;
+            }
+          }
+
+          double valor = item['value'];
+          double displayValue = isExpense ? -valor : valor;
+          totalSheetValue += displayValue;
+
+          sheet.appendRow([
+            TextCellValue(data),
+            TextCellValue(tipo),
+            TextCellValue(titulo),
+            TextCellValue(subtitulo),
+            TextCellValue(metodo),
+            DoubleCellValue(displayValue),
+          ]);
+        }
+
+        // Pula uma linha
+        sheet.appendRow([
+          TextCellValue(''),
+          TextCellValue(''),
+          TextCellValue(''),
+          TextCellValue(''),
+          TextCellValue(''),
+          TextCellValue(''),
+        ]);
+
+        // --- ESTILO E ADIÇÃO DA LINHA TOTALIZADORA ---
+        CellStyle totalStyle = CellStyle(
+          bold: true,
+          fontColorHex: totalSheetValue >= 0
+              ? ExcelColor.green
+              : ExcelColor.red,
+        );
+
+        int totalRowIndex = filteredList.length + 2;
+
+        var totalLabelCell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: totalRowIndex),
+        );
+        totalLabelCell.value = TextCellValue(lang.excelTotal);
+        totalLabelCell.cellStyle = CellStyle(bold: true);
+
+        var totalValueCell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: totalRowIndex),
+        );
+        totalValueCell.value = DoubleCellValue(totalSheetValue);
+        totalValueCell.cellStyle = totalStyle;
+      }
+
+      // Nomes das abas traduzidos
+      populateSheet(lang.excelSheetAll, 'Todos');
+      populateSheet(lang.excelSheetReceivable, 'A Receber');
+      populateSheet(lang.excelSheetCash, 'Dinheiro');
+      populateSheet(lang.excelSheetCard, 'Cartão');
+      populateSheet(lang.excelSheetExpenses, 'Despesas');
+
+      // --- VERIFICAÇÃO DE PLATAFORMA ---
+      if (!kIsWeb) {
+        // MOBILE LÓGICA
+        Directory directory = await getApplicationDocumentsDirectory();
+        String monthStr = DateFormat('MM_yyyy').format(_selectedDate);
+        String filePath = '${directory.path}/VLINIX_Financeiro_$monthStr.xlsx';
+
+        File file = File(filePath);
+        final bytes = excel.encode();
+        if (bytes != null) {
+          await file.writeAsBytes(bytes);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(lang.msgExcelSaved(monthStr)),
+                backgroundColor: AppColors.success,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      } else {
+        // WEB LÓGICA
+        final bytes = excel.encode();
+        if (bytes != null) {
+          String monthStr = DateFormat('MM_yyyy').format(_selectedDate);
+          String filename = 'VLINIX_Financeiro_$monthStr.xlsx';
+
+          // Cria um arquivo "virtual" (Blob) na memória do navegador
+          final blob = html.Blob(
+            [bytes],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          );
+          final url = html.Url.createObjectUrlFromBlob(blob);
+
+          // Cria um link invisível, clica nele para baixar e depois destrói o link
+          html.AnchorElement(href: url)
+            ..setAttribute('download', filename)
+            ..click();
+
+          html.Url.revokeObjectUrl(url);
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  lang.msgExcelDownloadStarted(filename),
+                ), // Tradução aplicada aqui!
+                backgroundColor: AppColors.success,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(lang.msgExportError(e.toString())),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -454,6 +730,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
         ),
         title: Text(lang.financeTitle),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download, color: Colors.white),
+            tooltip: lang.tooltipExportExcel,
+            onPressed: _records.isEmpty ? null : _exportToExcel,
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
 
       floatingActionButton: _selectedFilter == 'todos'
@@ -810,7 +1094,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
                               ],
                             ),
 
-                            // --- MENU PARA PENDENTES E AGORA PARA DESPESAS ---
                             if (isPending && itemId != null)
                               PopupMenuButton<String>(
                                 icon: const Icon(
@@ -856,7 +1139,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                   ),
                                 ],
                               )
-                            // <--- ADIÇÃO DO BOTÃO DE EXCLUIR NA DESPESA --->
                             else if (isExpense && itemId != null)
                               PopupMenuButton<String>(
                                 icon: const Icon(

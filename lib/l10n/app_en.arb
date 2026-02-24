@@ -170,5 +170,48 @@
     "labelDescription": "Reason / Description",
     "labelDate": "Date: ",
     "btnAddExpense": "ADD EXPENSE",
-    "msgExpenseSaved": "Expense saved successfully!"
+    "msgExpenseSaved": "Expense saved successfully!",
+    "msgGeneratingExcel": "Generating Excel file...",
+    "msgExcelSaved": "Saved in: Documents/VLINIX_Finance_{monthStr}.xlsx",
+    "@msgExcelSaved": {
+      "placeholders": {
+        "monthStr": {
+          "type": "String"
+        }
+      }
+    },
+    "msgExportWebNotSupported": "Web export not configured yet.",
+    "msgExportError": "Error exporting: {error}",
+    "@msgExportError": {
+      "placeholders": {
+        "error": {
+          "type": "String"
+        }
+      }
+    },
+    "tooltipExportExcel": "Export to Excel",
+    "excelSheetAll": "All",
+    "excelSheetReceivable": "Receivable",
+    "excelSheetCash": "Cash",
+    "excelSheetCard": "Card",
+    "excelSheetExpenses": "Expenses",
+    "excelColDate": "Date",
+    "excelColType": "Type",
+    "excelColDesc": "Description / Services",
+    "excelColClient": "Client / Subtitle",
+    "excelColMethod": "Method / Status",
+    "excelColValue": "Value",
+    "excelTypeExpense": "Expense",
+    "excelTypePending": "Pending",
+    "excelTypeIncome": "Income",
+    "excelStatusWaiting": "Waiting",
+    "excelTotal": "TOTAL:",
+    "msgExcelDownloadStarted": "Download started: {filename}",
+    "@msgExcelDownloadStarted": {
+      "placeholders": {
+        "filename": {
+          "type": "String"
+        }
+      }
+    }
 }

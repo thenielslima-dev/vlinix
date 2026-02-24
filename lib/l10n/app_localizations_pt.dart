@@ -526,4 +526,77 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get msgExpenseSaved => 'Despesa salva com sucesso!';
+
+  @override
+  String get msgGeneratingExcel => 'Gerando arquivo Excel...';
+
+  @override
+  String msgExcelSaved(String monthStr) {
+    return 'Salvo em: Documentos/VLINIX_Financeiro_$monthStr.xlsx';
+  }
+
+  @override
+  String get msgExportWebNotSupported =>
+      'Exportação Web não configurada ainda.';
+
+  @override
+  String msgExportError(String error) {
+    return 'Erro ao exportar: $error';
+  }
+
+  @override
+  String get tooltipExportExcel => 'Exportar Excel';
+
+  @override
+  String get excelSheetAll => 'Todos';
+
+  @override
+  String get excelSheetReceivable => 'A Receber';
+
+  @override
+  String get excelSheetCash => 'Dinheiro';
+
+  @override
+  String get excelSheetCard => 'Cartão';
+
+  @override
+  String get excelSheetExpenses => 'Despesas';
+
+  @override
+  String get excelColDate => 'Data';
+
+  @override
+  String get excelColType => 'Tipo';
+
+  @override
+  String get excelColDesc => 'Descrição / Serviços';
+
+  @override
+  String get excelColClient => 'Cliente / Subtítulo';
+
+  @override
+  String get excelColMethod => 'Método / Status';
+
+  @override
+  String get excelColValue => 'Valor';
+
+  @override
+  String get excelTypeExpense => 'Despesa';
+
+  @override
+  String get excelTypePending => 'Pendente';
+
+  @override
+  String get excelTypeIncome => 'Receita';
+
+  @override
+  String get excelStatusWaiting => 'Aguardando';
+
+  @override
+  String get excelTotal => 'TOTAL:';
+
+  @override
+  String msgExcelDownloadStarted(String filename) {
+    return 'Download iniciado: $filename';
+  }
 }
