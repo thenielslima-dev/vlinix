@@ -598,4 +598,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String msgExcelDownloadStarted(String filename) {
     return 'Download started: $filename';
   }
+
+  @override
+  String get expenseCatWater => 'Water';
+
+  @override
+  String get expenseCatEnergy => 'Energy';
+
+  @override
+  String get expenseCatGas => 'Gas / Fuel';
+
+  @override
+  String get expenseCatProducts => 'Products / Supplies';
+
+  @override
+  String get expenseCatFood => 'Food';
+
+  @override
+  String get expenseCatRent => 'Rent';
+
+  @override
+  String get expenseCatOthers => 'Others';
+
+  @override
+  String get labelWhichExpense => 'Which expense?';
 }

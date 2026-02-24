@@ -14,16 +14,38 @@ class AddExpenseScreen extends StatefulWidget {
 }
 
 class _AddExpenseScreenState extends State<AddExpenseScreen> {
-  final _descController = TextEditingController();
   final _amountController = TextEditingController();
+  final _otherDescController = TextEditingController();
   late DateTime _selectedDate;
   bool _isLoading = false;
+
+  String? _selectedCategory;
 
   @override
   void initState() {
     super.initState();
     if (widget.expenseToEdit != null) {
-      _descController.text = widget.expenseToEdit!['description'];
+      final String originalDesc = widget.expenseToEdit!['description'];
+
+      // Lista das categorias padrão
+      final List<String> standardCategories = [
+        'water',
+        'energy',
+        'gas',
+        'products',
+        'food',
+        'rent',
+        'others',
+      ];
+
+      // Se a descrição do banco não for uma das chaves padrão, significa que foi digitado algo customizado
+      if (!standardCategories.contains(originalDesc)) {
+        _selectedCategory = 'others';
+        _otherDescController.text = originalDesc;
+      } else {
+        _selectedCategory = originalDesc;
+      }
+
       _amountController.text = widget.expenseToEdit!['amount'].toString();
       _selectedDate = DateTime.parse(widget.expenseToEdit!['date']).toLocal();
     } else {
@@ -33,15 +55,44 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   @override
   void dispose() {
-    _descController.dispose();
     _amountController.dispose();
+    _otherDescController.dispose();
     super.dispose();
+  }
+
+  String _translateCategory(String categoryKey, AppLocalizations lang) {
+    switch (categoryKey) {
+      case 'water':
+        return lang.expenseCatWater;
+      case 'energy':
+        return lang.expenseCatEnergy;
+      case 'gas':
+        return lang.expenseCatGas;
+      case 'products':
+        return lang.expenseCatProducts;
+      case 'food':
+        return lang.expenseCatFood;
+      case 'rent':
+        return lang.expenseCatRent;
+      case 'others':
+        return lang.expenseCatOthers;
+      default:
+        return categoryKey;
+    }
   }
 
   Future<void> _save() async {
     final lang = AppLocalizations.of(context)!;
 
-    if (_descController.text.isEmpty || _amountController.text.isEmpty) {
+    // Validação
+    if (_selectedCategory == null || _amountController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(lang.msgFillAllFields)));
+      return;
+    }
+    if (_selectedCategory == 'others' &&
+        _otherDescController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(lang.msgFillAllFields)));
@@ -65,9 +116,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
       final String dateStr = safeDate.toIso8601String();
 
+      // Se for 'others', salvamos o texto digitado. Se não, salvamos a chave.
+      final String finalDescription = _selectedCategory == 'others'
+          ? _otherDescController.text.trim()
+          : _selectedCategory!;
+
       final data = {
         'user_id': userId,
-        'description': _descController.text.trim(),
+        'description': finalDescription,
         'amount': amount,
         'date': dateStr,
       };
@@ -84,9 +140,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              lang.msgExpenseSaved, // CHAVE APLICADA AQUI (Você criou ela no prompt anterior)
-            ),
+            content: Text(lang.msgExpenseSaved),
             backgroundColor: AppColors.success,
           ),
         );
@@ -113,13 +167,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
     final currencySymbol = lang.localeName == 'pt' ? 'R\$' : '\$';
 
+    final List<String> categories = [
+      'water',
+      'energy',
+      'gas',
+      'products',
+      'food',
+      'rent',
+      'others',
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          isEditing
-              ? lang.btnEdit
-              : lang.titleNewExpense, // CHAVE APLICADA AQUI
-        ),
+        title: Text(isEditing ? lang.btnEdit : lang.titleNewExpense),
         centerTitle: true,
       ),
       backgroundColor: AppColors.background,
@@ -149,13 +209,41 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                    controller: _descController,
+                  DropdownButtonFormField<String>(
+                    value: _selectedCategory,
                     decoration: InputDecoration(
-                      labelText: lang.labelDescription, // CHAVE APLICADA AQUI
-                      prefixIcon: const Icon(Icons.description),
+                      labelText: lang.labelDescription,
+                      prefixIcon: const Icon(Icons.category),
                     ),
+                    items: categories.map((String key) {
+                      return DropdownMenuItem<String>(
+                        value: key,
+                        child: Text(_translateCategory(key, lang)),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedCategory = newValue;
+                      });
+                    },
                   ),
+
+                  // --- CAMPO EXTRA SE 'OTHERS' FOR SELECIONADO ---
+                  if (_selectedCategory == 'others') ...[
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _otherDescController,
+                      decoration: InputDecoration(
+                        labelText: lang
+                            .labelWhichExpense, // --- TRADUÇÃO APLICADA AQUI ---
+                        prefixIcon: const Icon(Icons.edit),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 16),
                   TextField(
                     controller: _amountController,
@@ -171,7 +259,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   Row(
                     children: [
                       Text(
-                        lang.labelDate, // CHAVE APLICADA AQUI
+                        lang.labelDate,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -232,7 +320,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           : Text(
                               isEditing
                                   ? lang.btnUpdate.toUpperCase()
-                                  : lang.btnAddExpense, // CHAVE APLICADA AQUI
+                                  : lang.btnAddExpense,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1,

@@ -213,5 +213,13 @@
           "type": "String"
         }
       }
-    }
+    },
+    "expenseCatWater": "Agua",
+    "expenseCatEnergy": "Energía",
+    "expenseCatGas": "Gasolina / Combustible",
+    "expenseCatProducts": "Productos / Insumos",
+    "expenseCatFood": "Alimentación",
+    "expenseCatRent": "Alquiler",
+    "expenseCatOthers": "Otros",
+    "labelWhichExpense": "¿Qué gasto?"
 }

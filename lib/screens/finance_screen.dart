@@ -431,10 +431,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
     try {
       var excel = Excel.createExcel();
 
-      for (var sheetName in excel.tables.keys.toList()) {
-        excel.delete(sheetName);
-      }
-
       void populateSheet(String sheetName, String filterType) {
         Sheet sheet = excel[sheetName];
 
@@ -616,6 +612,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
       populateSheet(lang.excelSheetCash, 'Dinheiro');
       populateSheet(lang.excelSheetCard, 'Cartão');
       populateSheet(lang.excelSheetExpenses, 'Despesas');
+
+      // --- NOVA LÓGICA: APAGA A SHEET1 DEPOIS DE CRIAR AS OUTRAS ---
+      if (excel.tables.keys.contains('Sheet1')) {
+        excel.delete('Sheet1');
+      }
+
+      // Define a aba "Todos" como a aba principal que o Excel vai abrir primeiro
+      excel.setDefaultSheet(lang.excelSheetAll);
 
       // --- VERIFICAÇÃO DE PLATAFORMA ---
       if (!kIsWeb) {
@@ -948,9 +952,12 @@ class _FinanceScreenState extends State<FinanceScreen> {
                     ),
                   )
                 : ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 8,
+                      bottom:
+                          85, // <--- Este espaço permite rolar a lista pra cima do botão!
                     ),
                     itemCount: _records.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),

@@ -1239,6 +1239,54 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Download iniciado: {filename}'**
   String msgExcelDownloadStarted(String filename);
+
+  /// No description provided for @expenseCatWater.
+  ///
+  /// In pt, this message translates to:
+  /// **'Água'**
+  String get expenseCatWater;
+
+  /// No description provided for @expenseCatEnergy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Energia'**
+  String get expenseCatEnergy;
+
+  /// No description provided for @expenseCatGas.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gasolina / Combustível'**
+  String get expenseCatGas;
+
+  /// No description provided for @expenseCatProducts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Produtos / Insumos'**
+  String get expenseCatProducts;
+
+  /// No description provided for @expenseCatFood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alimentação'**
+  String get expenseCatFood;
+
+  /// No description provided for @expenseCatRent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aluguel'**
+  String get expenseCatRent;
+
+  /// No description provided for @expenseCatOthers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outros'**
+  String get expenseCatOthers;
+
+  /// No description provided for @labelWhichExpense.
+  ///
+  /// In pt, this message translates to:
+  /// **'Qual despesa?'**
+  String get labelWhichExpense;
 }
 
 class _AppLocalizationsDelegate

@@ -213,5 +213,13 @@
           "type": "String"
         }
       }
-    }
+    },
+    "expenseCatWater": "Water",
+    "expenseCatEnergy": "Energy",
+    "expenseCatGas": "Gas / Fuel",
+    "expenseCatProducts": "Products / Supplies",
+    "expenseCatFood": "Food",
+    "expenseCatRent": "Rent",
+    "expenseCatOthers": "Others",
+    "labelWhichExpense": "Which expense?"
 }
