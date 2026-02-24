@@ -76,7 +76,9 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(lang.msgClientDeleted),
+            content: Text(
+              lang.msgClientDeleted,
+            ), // Mantive essa chave que você usou
             backgroundColor: AppColors.success,
           ),
         );
@@ -213,7 +215,9 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
                   itemBuilder: (context, index) {
                     final vehicle = vehicles[index];
                     final ownerName = _getOwnerName(vehicle['client_id']);
-                    final category = vehicle['category'] ?? 'Sem categoria';
+                    // Substituída a string chumbada pela chave que já tínhamos criado
+                    final category =
+                        vehicle['category'] ?? lang.labelCategoryNoCategory;
 
                     return Card(
                       elevation: 0,
@@ -243,7 +247,7 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
                           ),
                         ),
                         title: Text(
-                          '${vehicle['model']} - $category', // Exibe Modelo e Categoria
+                          '${vehicle['model']} - $category',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Column(
@@ -267,7 +271,9 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  ownerName.isNotEmpty ? ownerName : 'Sem dono',
+                                  ownerName.isNotEmpty
+                                      ? ownerName
+                                      : lang.labelNoOwner, // NOVA CHAVE
                                   style: const TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 12,

@@ -457,8 +457,8 @@ abstract class AppLocalizations {
   /// No description provided for @labelTotal.
   ///
   /// In pt, this message translates to:
-  /// **'Total Estimado'**
-  String get labelTotal;
+  /// **'TOTAL {filter}'**
+  String labelTotal(Object filter);
 
   /// No description provided for @msgSelectService.
   ///
@@ -729,6 +729,324 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Erro ao buscar CEP'**
   String get msgErrorSearchZip;
+
+  /// No description provided for @titleQuickTemplates.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sugestões Rápidas'**
+  String get titleQuickTemplates;
+
+  /// No description provided for @msgTemplateApplied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sugerindo: {name}'**
+  String msgTemplateApplied(Object name);
+
+  /// No description provided for @labelPrice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preço'**
+  String get labelPrice;
+
+  /// No description provided for @labelCategory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tamanho / Categoria'**
+  String get labelCategory;
+
+  /// No description provided for @msgErrorSaveVehicle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione um cliente, tamanho e preencha o modelo.'**
+  String get msgErrorSaveVehicle;
+
+  /// No description provided for @msgVehicleSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Veículo salvo com sucesso!'**
+  String get msgVehicleSaved;
+
+  /// No description provided for @hintModelExample.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex: Tesla Model 3'**
+  String get hintModelExample;
+
+  /// No description provided for @labelNoOwner.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem dono'**
+  String get labelNoOwner;
+
+  /// No description provided for @dialogDeleteAppointmentTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir Agendamento?'**
+  String get dialogDeleteAppointmentTitle;
+
+  /// No description provided for @dialogDeleteAppointmentContent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Isso apagará do app e do Google Agenda.'**
+  String get dialogDeleteAppointmentContent;
+
+  /// No description provided for @msgLoading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carregando...'**
+  String get msgLoading;
+
+  /// No description provided for @msgErrorSelectImage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao selecionar imagem'**
+  String get msgErrorSelectImage;
+
+  /// No description provided for @msgUserNotLoggedIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usuário não logado'**
+  String get msgUserNotLoggedIn;
+
+  /// No description provided for @msgErrorCleanupAvatar.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro não crítico na limpeza'**
+  String get msgErrorCleanupAvatar;
+
+  /// No description provided for @msgProfileUpdated.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil atualizado com sucesso! ✅'**
+  String get msgProfileUpdated;
+
+  /// No description provided for @labelNetBalance.
+  ///
+  /// In pt, this message translates to:
+  /// **'SALDO LÍQUIDO'**
+  String get labelNetBalance;
+
+  /// No description provided for @labelTotalReceivable.
+  ///
+  /// In pt, this message translates to:
+  /// **'TOTAL A RECEBER'**
+  String get labelTotalReceivable;
+
+  /// No description provided for @statusAwaitingPayment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguardando Pagamento'**
+  String get statusAwaitingPayment;
+
+  /// No description provided for @labelExpenseTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Despesa'**
+  String get labelExpenseTitle;
+
+  /// No description provided for @labelExpenseSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saída'**
+  String get labelExpenseSubtitle;
+
+  /// No description provided for @filterPending.
+  ///
+  /// In pt, this message translates to:
+  /// **'A Receber'**
+  String get filterPending;
+
+  /// No description provided for @labelWithoutRegistration.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem registro'**
+  String get labelWithoutRegistration;
+
+  /// No description provided for @msgRemovedFromGoogle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Removido da Agenda Google 📅'**
+  String get msgRemovedFromGoogle;
+
+  /// No description provided for @msgAddedToGoogle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Readicionado à Agenda Google 📅'**
+  String get msgAddedToGoogle;
+
+  /// No description provided for @dialogReactivateTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reativar Agendamento?'**
+  String get dialogReactivateTitle;
+
+  /// No description provided for @dialogReactivateContent.
+  ///
+  /// In pt, this message translates to:
+  /// **'O agendamento voltará para o status Pendente e será readicionado à agenda.'**
+  String get dialogReactivateContent;
+
+  /// No description provided for @btnReactivate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reativar'**
+  String get btnReactivate;
+
+  /// No description provided for @tooltipDetails.
+  ///
+  /// In pt, this message translates to:
+  /// **'Detalhes'**
+  String get tooltipDetails;
+
+  /// No description provided for @labelUnknownClient.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desconhecido'**
+  String get labelUnknownClient;
+
+  /// No description provided for @labelUnknownVehicle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carro?'**
+  String get labelUnknownVehicle;
+
+  /// No description provided for @msgErrorGoogleLogin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao iniciar Google Login'**
+  String get msgErrorGoogleLogin;
+
+  /// No description provided for @msgErrorUnexpected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro inesperado.'**
+  String get msgErrorUnexpected;
+
+  /// No description provided for @btnLoginGoogle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrar com Google'**
+  String get btnLoginGoogle;
+
+  /// No description provided for @labelOr.
+  ///
+  /// In pt, this message translates to:
+  /// **'OU'**
+  String get labelOr;
+
+  /// No description provided for @labelPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Senha'**
+  String get labelPassword;
+
+  /// No description provided for @btnLogin.
+  ///
+  /// In pt, this message translates to:
+  /// **'ENTRAR'**
+  String get btnLogin;
+
+  /// No description provided for @btnCreateAccountNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar conta agora'**
+  String get btnCreateAccountNow;
+
+  /// No description provided for @msgDemoModeStarted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modo Teste: Sessão expira em 10 minutos! ⏳'**
+  String get msgDemoModeStarted;
+
+  /// No description provided for @msgDemoModeEnded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tempo de teste finalizado. Obrigado! 👋'**
+  String get msgDemoModeEnded;
+
+  /// No description provided for @dialogDeleteServiceTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir Serviço?'**
+  String get dialogDeleteServiceTitle;
+
+  /// No description provided for @dialogDeleteServiceContent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se este serviço estiver em algum agendamento, ele não poderá ser excluído.'**
+  String get dialogDeleteServiceContent;
+
+  /// No description provided for @msgServiceDeleted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Serviço excluído com sucesso.'**
+  String get msgServiceDeleted;
+
+  /// No description provided for @msgErrorDeleteService.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro: Serviço em uso ou falha ao excluir!'**
+  String get msgErrorDeleteService;
+
+  /// No description provided for @msgNoServices.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum serviço cadastrado.'**
+  String get msgNoServices;
+
+  /// No description provided for @titleCreateAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar Conta'**
+  String get titleCreateAccount;
+
+  /// No description provided for @msgJoinApp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Junte-se ao V-LINIX'**
+  String get msgJoinApp;
+
+  /// No description provided for @msgCreateAccountSeconds.
+  ///
+  /// In pt, this message translates to:
+  /// **'Crie sua conta em segundos'**
+  String get msgCreateAccountSeconds;
+
+  /// No description provided for @msgInvalidEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-mail inválido. Verifique o formato.'**
+  String get msgInvalidEmail;
+
+  /// No description provided for @msgShortPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'A senha deve ter pelo menos 6 caracteres.'**
+  String get msgShortPassword;
+
+  /// No description provided for @msgAccountCreated.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta criada! Bem-vindo.'**
+  String get msgAccountCreated;
+
+  /// No description provided for @btnSignUp.
+  ///
+  /// In pt, this message translates to:
+  /// **'CADASTRAR'**
+  String get btnSignUp;
+
+  /// No description provided for @hintEmailExample.
+  ///
+  /// In pt, this message translates to:
+  /// **'exemplo@email.com'**
+  String get hintEmailExample;
+
+  /// No description provided for @labelDefaultUser.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usuário'**
+  String get labelDefaultUser;
 }
 
 class _AppLocalizationsDelegate

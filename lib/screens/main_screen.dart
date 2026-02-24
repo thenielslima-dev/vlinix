@@ -62,11 +62,12 @@ class _MainScreenState extends State<MainScreen> {
       // Opcional: Mostrar um aviso inicial
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
+          final lang = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Modo Teste: Sessão expira em 10 minutos! ⏳'),
+            SnackBar(
+              content: Text(lang.msgDemoModeStarted), // CHAVE APLICADA
               backgroundColor: Colors.orange,
-              duration: Duration(seconds: 5),
+              duration: const Duration(seconds: 5),
             ),
           );
         }
@@ -82,6 +83,7 @@ class _MainScreenState extends State<MainScreen> {
 
     // 2. Redireciona para o Login (removendo histórico)
     if (mounted) {
+      final lang = AppLocalizations.of(context)!;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
         (route) => false,
@@ -89,10 +91,10 @@ class _MainScreenState extends State<MainScreen> {
 
       // 3. Aviso de expiração
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tempo de teste finalizado. Obrigado! 👋'),
+        SnackBar(
+          content: Text(lang.msgDemoModeEnded), // CHAVE APLICADA
           backgroundColor: AppColors.error,
-          duration: Duration(seconds: 5),
+          duration: const Duration(seconds: 5),
         ),
       );
     }
@@ -119,8 +121,8 @@ class _MainScreenState extends State<MainScreen> {
             indicatorColor: AppColors.accent.withOpacity(
               0.2,
             ), // Deprecated warning corrigido: withValues se for Flutter 3.27+
-            labelTextStyle: MaterialStateProperty.resolveWith((states) {
-              if (states.contains(MaterialState.selected)) {
+            labelTextStyle: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
                 return const TextStyle(
                   color: AppColors.accent,
                   fontWeight: FontWeight.bold,
@@ -129,8 +131,8 @@ class _MainScreenState extends State<MainScreen> {
               }
               return const TextStyle(color: Colors.grey, fontSize: 12);
             }),
-            iconTheme: MaterialStateProperty.resolveWith((states) {
-              if (states.contains(MaterialState.selected)) {
+            iconTheme: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
                 return const IconThemeData(color: AppColors.accent);
               }
               return const IconThemeData(color: Colors.grey);

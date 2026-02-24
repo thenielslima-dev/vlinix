@@ -151,10 +151,17 @@ class _ClientsScreenState extends State<ClientsScreen> {
             child: StreamBuilder<List<Map<String, dynamic>>>(
               stream: _clientsStream,
               builder: (context, snapshot) {
-                if (snapshot.hasError)
-                  return Center(child: Text('Erro: ${snapshot.error}'));
-                if (!snapshot.hasData)
+                if (snapshot.hasError) {
+                  // Substituído texto chumbado pela chave de erro
+                  return Center(
+                    child: Text(
+                      lang.msgErrorGeneric(snapshot.error.toString()),
+                    ),
+                  );
+                }
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
+                }
 
                 final allClients = snapshot.data!;
                 final clients = allClients.where((client) {
@@ -254,7 +261,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                 ],
                               ),
                             if (client['address'] != null &&
-                                client['address'] != '') // <--- EXIBE ENDEREÇO
+                                client['address'] != '')
                               Row(
                                 children: [
                                   const Icon(

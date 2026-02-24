@@ -50,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
         59,
       ).toUtc().toIso8601String();
 
-      // --- CORREÇÃO AQUI: Trocado 'plate' por 'category' ---
       const selectQuery = '''
         *,
         clients(full_name),
@@ -95,6 +94,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final supabase = Supabase.instance.client;
     String feedbackMsg = '';
 
+    // Obter o lang aqui com cuidado se a função for iniciada por um contexto que pode não estar mais na árvore
+    // Idealmente passamos a String já traduzida ou pegamos depois de validar se está mounted, mas vamos resolver isso logo em seguida.
+
     try {
       // 1. LÓGICA DO GOOGLE CALENDAR
       final currentData = await supabase
@@ -111,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (newStatus == 'cancelado') {
         if (currentGoogleId != null && currentGoogleId.isNotEmpty) {
           await GoogleCalendarService.instance.deleteEvent(currentGoogleId);
-          feedbackMsg = 'Removido da Agenda Google 📅';
+          // Atualiza a msg no momento em que for mostrar, para garantir o Context
         }
       } else if (newStatus == 'pendente') {
         final clientName = currentData['clients']['full_name'];
@@ -125,8 +127,12 @@ class _HomeScreenState extends State<HomeScreen> {
         final totalPrice = items.fold(0.0, (sum, i) => sum + (i['price'] ?? 0));
 
         final title = 'Vlinix: $servicesNames - $clientName';
+
+        // Simbolo da moeda para a desc do google (vamos assumir o locale default, pois o google envia isso pra nuvem)
+        final currency = NumberFormat.simpleCurrency(name: '').currencySymbol;
+
         final desc =
-            'Reativado - Serviços: $servicesNames\nTotal: R\$ $totalPrice';
+            'Reativado - Serviços: $servicesNames\nTotal: $currency $totalPrice';
 
         newGoogleEventId = await GoogleCalendarService.instance.insertEvent(
           title: title,
@@ -134,10 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
           startTime: startTime,
           endTime: endTime,
         );
-
-        if (newGoogleEventId != null) {
-          feedbackMsg = 'Readicionado à Agenda Google 📅';
-        }
       }
 
       // 2. ATUALIZAÇÃO NO SUPABASE
@@ -163,6 +165,14 @@ class _HomeScreenState extends State<HomeScreen> {
         final lang = AppLocalizations.of(context)!;
         String msg = '';
         Color color = Colors.blue;
+
+        if (newStatus == 'cancelado' &&
+            currentGoogleId != null &&
+            currentGoogleId.isNotEmpty) {
+          feedbackMsg = lang.msgRemovedFromGoogle;
+        } else if (newStatus == 'pendente' && newGoogleEventId != null) {
+          feedbackMsg = lang.msgAddedToGoogle;
+        }
 
         if (newStatus == 'concluido') {
           msg = '${lang.statusDone} ✅';
@@ -196,7 +206,12 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.msgErrorGeneric(e.toString()),
+            ),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }
@@ -219,6 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showChecklistDialog(Map<String, dynamic> apt) {
     final lang = AppLocalizations.of(context)!;
+    final currencySymbol = NumberFormat.simpleCurrency(name: '').currencySymbol;
     final List items = apt['appointment_services'] ?? [];
 
     showDialog(
@@ -239,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final bool isChecked = item['completed'] ?? false;
                     return CheckboxListTile(
                       title: Text(item['services']['name']),
-                      subtitle: Text("R\$ ${item['price']}"),
+                      subtitle: Text("$currencySymbol ${item['price']}"),
                       value: isChecked,
                       activeColor: AppColors.success,
                       onChanged: (val) async {
@@ -352,6 +368,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Map<String, dynamic> _processAppointmentData(Map<String, dynamic> apt) {
+    final lang = AppLocalizations.of(context)!;
+
     String serviceNames = '';
     double totalPrice = 0.0;
 
@@ -367,11 +385,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return {
       'clientName': apt['clients'] != null
           ? apt['clients']['full_name']
-          : 'Desconhecido',
-      // --- CORREÇÃO AQUI: Mudança de plate para category ---
+          : lang.labelUnknownClient,
       'vehicleInfo': apt['vehicles'] != null
-          ? "${apt['vehicles']['model']} - ${apt['vehicles']['category'] ?? 'Sem categoria'}"
-          : 'Carro?',
+          ? "${apt['vehicles']['model']} - ${apt['vehicles']['category'] ?? lang.labelCategoryNoCategory}"
+          : lang.labelUnknownVehicle,
       'serviceNames': serviceNames,
       'totalPrice': totalPrice,
       'status': apt['status'],
@@ -602,6 +619,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final lang = AppLocalizations.of(context)!;
+    final currencySymbol = NumberFormat.simpleCurrency(name: '').currencySymbol;
 
     return ListView.builder(
       shrinkWrap: true,
@@ -621,15 +639,13 @@ class _HomeScreenState extends State<HomeScreen> {
         if (isCancelled) {
           actionIcon = Icons.refresh;
           actionColor = Colors.grey;
-          tooltip = "Reativar";
+          tooltip = lang.btnReactivate;
           onPressed = () {
             showDialog(
               context: context,
               builder: (ctx) => AlertDialog(
-                title: const Text('Reativar Agendamento?'),
-                content: const Text(
-                  'O agendamento voltará para o status Pendente e será readicionado à agenda.',
-                ),
+                title: Text(lang.dialogReactivateTitle),
+                content: Text(lang.dialogReactivateContent),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx),
@@ -643,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.pop(ctx);
                       _updateStatus(apt['id'], 'pendente'); // REATIVAR
                     },
-                    child: const Text('Reativar'),
+                    child: Text(lang.btnReactivate),
                   ),
                 ],
               ),
@@ -662,7 +678,7 @@ class _HomeScreenState extends State<HomeScreen> {
         } else {
           actionIcon = Icons.check_circle;
           actionColor = AppColors.success;
-          tooltip = 'Detalhes';
+          tooltip = lang.tooltipDetails;
           onPressed = () {};
         }
 
@@ -755,7 +771,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      "R\$ ${data['totalPrice'].toStringAsFixed(2)}",
+                      "$currencySymbol ${data['totalPrice'].toStringAsFixed(2)}",
                       style: TextStyle(
                         color: isCancelled ? Colors.grey : AppColors.success,
                         fontWeight: FontWeight.w800,

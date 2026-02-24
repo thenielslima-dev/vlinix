@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vlinix/theme/app_colors.dart'; // Nossas cores
-import 'main_screen.dart'; // <--- IMPORTANTE: Manda para a MainScreen
+import 'package:vlinix/theme/app_colors.dart';
+import 'package:vlinix/l10n/app_localizations.dart'; // <--- IMPORTADO
+import 'main_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -24,21 +25,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _signUp() async {
+    final lang = AppLocalizations.of(context)!; // Pegando o lang
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Preencha todos os campos')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(lang.msgFillAllFields)),
+      ); // Chave já existente
       return;
     }
 
     if (!_isValidEmail(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('E-mail inválido. Verifique o formato.'),
+        SnackBar(
+          content: Text(lang.msgInvalidEmail), // CHAVE APLICADA
           backgroundColor: Colors.orange,
         ),
       );
@@ -47,8 +49,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (password.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('A senha deve ter pelo menos 6 caracteres.'),
+        SnackBar(
+          content: Text(lang.msgShortPassword), // CHAVE APLICADA
           backgroundColor: Colors.orange,
         ),
       );
@@ -65,12 +67,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Conta criada! Bem-vindo.'),
+          SnackBar(
+            content: Text(lang.msgAccountCreated), // CHAVE APLICADA
             backgroundColor: AppColors.success,
           ),
         );
-        // <--- MUDANÇA: Vai para a MainScreen
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const MainScreen()),
           (route) => false,
@@ -85,8 +86,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erro inesperado'),
+          SnackBar(
+            content: Text(
+              lang.msgErrorUnexpected,
+            ), // Chave adicionada na tela de login
             backgroundColor: AppColors.error,
           ),
         );
@@ -99,13 +102,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
+    final lang = AppLocalizations.of(context)!; // Pegando o lang no build
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          "Criar Conta",
-          style: TextStyle(
+        title: Text(
+          lang.titleCreateAccount, // CHAVE APLICADA
+          style: const TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
           ),
@@ -113,9 +117,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(
-          color: AppColors.primary,
-        ), // Seta de voltar Chumbo
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
 
       body: Center(
@@ -144,11 +146,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // --- 1. LOGO / ÍCONE NOVO ---
                   Hero(
                     tag: 'app_logo',
                     child: Image.asset(
-                      'assets/images/logo_symbol.png', // Usamos o Símbolo aqui pra variar
+                      'assets/images/logo_symbol.png',
                       height: 80,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
@@ -163,53 +164,52 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                   const SizedBox(height: 20),
 
-                  const Text(
-                    "Junte-se ao V-LINIX",
-                    style: TextStyle(
+                  Text(
+                    lang.msgJoinApp, // CHAVE APLICADA
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    "Crie sua conta em segundos",
-                    style: TextStyle(color: AppColors.textSecondary),
+                  Text(
+                    lang.msgCreateAccountSeconds, // CHAVE APLICADA
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
 
                   const SizedBox(height: 30),
 
-                  // --- 2. INPUTS (Theme Global) ---
                   TextField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nome Completo',
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      labelText: lang.labelName, // Chave existente
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
-                      hintText: 'exemplo@email.com',
+                    decoration: InputDecoration(
+                      labelText: lang.labelEmail, // Chave existente
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      hintText: lang.hintEmailExample, // CHAVE APLICADA
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Senha',
-                      prefixIcon: Icon(Icons.lock_outline),
+                    decoration: InputDecoration(
+                      labelText: lang
+                          .labelPassword, // Chave existente da tela de login
+                      prefixIcon: const Icon(Icons.lock_outline),
                     ),
                   ),
 
                   const SizedBox(height: 30),
 
-                  // --- 3. BOTÃO CADASTRAR (Theme Global) ---
                   _isLoading
                       ? const CircularProgressIndicator(color: AppColors.accent)
                       : SizedBox(
@@ -222,9 +222,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 borderRadius: BorderRadius.circular(30),
                               ),
                             ),
-                            child: const Text(
-                              'CADASTRAR',
-                              style: TextStyle(
+                            child: Text(
+                              lang.btnSignUp, // CHAVE APLICADA
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1,
                               ),

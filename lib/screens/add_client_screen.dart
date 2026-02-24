@@ -212,7 +212,10 @@ class _AddClientScreenState extends State<AddClientScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text(lang.msgErrorGeneric(e.toString())),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
@@ -224,7 +227,6 @@ class _AddClientScreenState extends State<AddClientScreen> {
   Widget build(BuildContext context) {
     final isEditing = widget.clientToEdit != null;
     final lang = AppLocalizations.of(context)!;
-    final isPt = Localizations.localeOf(context).languageCode == 'pt';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -271,7 +273,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                         prefixIcon: const Icon(Icons.person),
                       ),
                       validator: (value) => value == null || value.isEmpty
-                          ? 'Informe o nome'
+                          ? lang.msgEmptyName
                           : null,
                     ),
                     const SizedBox(height: 16),
@@ -364,7 +366,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                             controller: _zipController,
                             keyboardType: TextInputType.text,
                             decoration: InputDecoration(
-                              labelText: isPt ? 'CEP' : 'Zipcode',
+                              labelText: lang.labelZipcode,
                               prefixIcon: const Icon(
                                 Icons.markunread_mailbox_outlined,
                               ),
@@ -398,7 +400,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                           child: TextFormField(
                             controller: _numberController,
                             decoration: InputDecoration(
-                              labelText: isPt ? 'Número' : 'Number',
+                              labelText: lang.labelNumber,
                             ),
                           ),
                         ),
@@ -409,7 +411,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     TextFormField(
                       controller: _streetController,
                       decoration: InputDecoration(
-                        labelText: isPt ? 'Rua / Logradouro' : 'Street',
+                        labelText: lang.labelStreet,
                         prefixIcon: const Icon(Icons.location_on_outlined),
                       ),
                     ),
@@ -422,7 +424,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                           child: TextFormField(
                             controller: _cityController,
                             decoration: InputDecoration(
-                              labelText: isPt ? 'Cidade' : 'City',
+                              labelText: lang.labelCity,
                               prefixIcon: const Icon(Icons.location_city),
                             ),
                           ),
@@ -433,7 +435,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                           child: TextFormField(
                             controller: _stateController,
                             decoration: InputDecoration(
-                              labelText: isPt ? 'Estado' : 'State',
+                              labelText: lang.labelState,
                             ),
                           ),
                         ),

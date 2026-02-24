@@ -55,7 +55,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Erro ao selecionar imagem: $e');
+      if (mounted) {
+        // Usando a chave para o erro no console/debug, mas exibindo no log apenas
+        debugPrint('${AppLocalizations.of(context)!.msgErrorSelectImage}: $e');
+      } else {
+        debugPrint('Erro ao selecionar imagem: $e');
+      }
     }
   }
 
@@ -63,9 +68,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _isLoading = true);
     final supabase = Supabase.instance.client;
     final user = supabase.auth.currentUser;
+    // Pega o lang antes do try catch se possível, mas como pode ter await antes do uso de context,
+    // garantimos pegar ele dentro do mounted lá em baixo.
 
     try {
-      if (user == null) throw 'Usuário não logado';
+      if (user == null) {
+        if (mounted)
+          throw AppLocalizations.of(
+            context,
+          )!.msgUserNotLoggedIn; // CHAVE APLICADA
+        else
+          throw 'User not logged in';
+      }
 
       String? newAvatarUrl = _avatarUrl;
 
@@ -105,7 +119,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             await supabase.storage.from('avatars').remove(itemsToDelete);
           }
         } catch (e) {
-          debugPrint('Erro não crítico na limpeza: $e');
+          if (mounted) {
+            debugPrint(
+              '${AppLocalizations.of(context)!.msgErrorCleanupAvatar}: $e',
+            ); // CHAVE APLICADA
+          } else {
+            debugPrint('Erro não crítico na limpeza: $e');
+          }
         }
       }
 
@@ -122,8 +142,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Perfil atualizado com sucesso! ✅'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.msgProfileUpdated,
+            ), // CHAVE APLICADA
             backgroundColor: AppColors.success,
           ),
         );
@@ -133,7 +155,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       debugPrint("Erro detalhado: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.msgErrorGeneric(e.toString()),
+            ), // CHAVE GENÉRICA
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {

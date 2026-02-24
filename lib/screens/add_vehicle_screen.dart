@@ -81,12 +81,16 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   }
 
   Future<void> _save() async {
+    final lang = AppLocalizations.of(
+      context,
+    )!; // Trazemos o lang para dentro da função
+
     if (_modelController.text.isEmpty ||
         _selectedClientId == null ||
         _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecione um cliente, tamanho e preencha o modelo.'),
+        SnackBar(
+          content: Text(lang.msgErrorSaveVehicle), // NOVA CHAVE
         ),
       );
       return;
@@ -116,8 +120,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Veículo salvo com sucesso!'),
+          SnackBar(
+            content: Text(lang.msgVehicleSaved), // NOVA CHAVE
             backgroundColor: AppColors.success,
           ),
         );
@@ -127,7 +131,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao salvar: $e'),
+            content: Text(
+              lang.msgErrorGeneric(e.toString()),
+            ), // Chave genérica de erro
             backgroundColor: AppColors.error,
           ),
         );
@@ -145,7 +151,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? lang.titleEditVehicle : 'Novo Veículo'),
+        title: Text(
+          isEditing ? lang.titleEditVehicle : lang.titleNewVehicle,
+        ), // Trocado para as chaves corretas
         centerTitle: true,
       ),
       backgroundColor: AppColors.background,
@@ -206,9 +214,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         // Dropdown Categoria / Tamanho
                         DropdownButtonFormField<String>(
                           value: _selectedCategory,
-                          decoration: const InputDecoration(
-                            labelText: 'Tamanho / Categoria',
-                            prefixIcon: Icon(Icons.category),
+                          decoration: InputDecoration(
+                            labelText: lang.labelCategory, // NOVA CHAVE
+                            prefixIcon: const Icon(Icons.category),
                           ),
                           items: _vehicleSizes.map((size) {
                             return DropdownMenuItem(
@@ -256,7 +264,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                                     prefixIcon: const Icon(
                                       Icons.directions_car,
                                     ),
-                                    hintText: 'Ex: Tesla Model 3',
+                                    hintText:
+                                        lang.hintModelExample, // NOVA CHAVE
                                   ),
                                 );
                               },

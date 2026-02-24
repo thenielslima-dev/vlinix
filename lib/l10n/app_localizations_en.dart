@@ -187,7 +187,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelSelectServices => 'Select Services';
 
   @override
-  String get labelTotal => 'Estimated Total';
+  String labelTotal(Object filter) {
+    return 'TOTAL $filter';
+  }
 
   @override
   String get msgSelectService => 'Select at least one service!';
@@ -327,4 +329,171 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get msgErrorSearchZip => 'Error searching Zipcode';
+
+  @override
+  String get titleQuickTemplates => 'Quick Templates';
+
+  @override
+  String msgTemplateApplied(Object name) {
+    return 'Suggesting: $name';
+  }
+
+  @override
+  String get labelPrice => 'Price';
+
+  @override
+  String get labelCategory => 'Size / Category';
+
+  @override
+  String get msgErrorSaveVehicle =>
+      'Select a client, size, and enter the model.';
+
+  @override
+  String get msgVehicleSaved => 'Vehicle saved successfully!';
+
+  @override
+  String get hintModelExample => 'Ex: Tesla Model 3';
+
+  @override
+  String get labelNoOwner => 'No owner';
+
+  @override
+  String get dialogDeleteAppointmentTitle => 'Delete Appointment?';
+
+  @override
+  String get dialogDeleteAppointmentContent =>
+      'This will delete it from the app and Google Calendar.';
+
+  @override
+  String get msgLoading => 'Loading...';
+
+  @override
+  String get msgErrorSelectImage => 'Error selecting image';
+
+  @override
+  String get msgUserNotLoggedIn => 'User not logged in';
+
+  @override
+  String get msgErrorCleanupAvatar => 'Non-critical error during cleanup';
+
+  @override
+  String get msgProfileUpdated => 'Profile updated successfully! ✅';
+
+  @override
+  String get labelNetBalance => 'NET BALANCE';
+
+  @override
+  String get labelTotalReceivable => 'TOTAL RECEIVABLE';
+
+  @override
+  String get statusAwaitingPayment => 'Awaiting Payment';
+
+  @override
+  String get labelExpenseTitle => 'Expense';
+
+  @override
+  String get labelExpenseSubtitle => 'Outflow';
+
+  @override
+  String get filterPending => 'Receivable';
+
+  @override
+  String get labelWithoutRegistration => 'Unregistered';
+
+  @override
+  String get msgRemovedFromGoogle => 'Removed from Google Calendar 📅';
+
+  @override
+  String get msgAddedToGoogle => 'Re-added to Google Calendar 📅';
+
+  @override
+  String get dialogReactivateTitle => 'Reactivate Appointment?';
+
+  @override
+  String get dialogReactivateContent =>
+      'The appointment will return to Pending status and be added back to the calendar.';
+
+  @override
+  String get btnReactivate => 'Reactivate';
+
+  @override
+  String get tooltipDetails => 'Details';
+
+  @override
+  String get labelUnknownClient => 'Unknown';
+
+  @override
+  String get labelUnknownVehicle => 'Car?';
+
+  @override
+  String get msgErrorGoogleLogin => 'Error starting Google Login';
+
+  @override
+  String get msgErrorUnexpected => 'Unexpected error.';
+
+  @override
+  String get btnLoginGoogle => 'Sign in with Google';
+
+  @override
+  String get labelOr => 'OR';
+
+  @override
+  String get labelPassword => 'Password';
+
+  @override
+  String get btnLogin => 'SIGN IN';
+
+  @override
+  String get btnCreateAccountNow => 'Create account now';
+
+  @override
+  String get msgDemoModeStarted =>
+      'Test Mode: Session expires in 10 minutes! ⏳';
+
+  @override
+  String get msgDemoModeEnded => 'Test time has ended. Thank you! 👋';
+
+  @override
+  String get dialogDeleteServiceTitle => 'Delete Service?';
+
+  @override
+  String get dialogDeleteServiceContent =>
+      'If this service is in any appointment, it cannot be deleted.';
+
+  @override
+  String get msgServiceDeleted => 'Service deleted successfully.';
+
+  @override
+  String get msgErrorDeleteService =>
+      'Error: Service in use or failed to delete!';
+
+  @override
+  String get msgNoServices => 'No services registered.';
+
+  @override
+  String get titleCreateAccount => 'Create Account';
+
+  @override
+  String get msgJoinApp => 'Join V-LINIX';
+
+  @override
+  String get msgCreateAccountSeconds => 'Create your account in seconds';
+
+  @override
+  String get msgInvalidEmail => 'Invalid email. Check the format.';
+
+  @override
+  String get msgShortPassword => 'Password must be at least 6 characters.';
+
+  @override
+  String get msgAccountCreated => 'Account created! Welcome.';
+
+  @override
+  String get btnSignUp => 'SIGN UP';
+
+  @override
+  String get hintEmailExample => 'example@email.com';
+
+  @override
+  String get labelDefaultUser => 'User';
 }

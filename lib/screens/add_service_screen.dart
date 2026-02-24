@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
-import 'package:vlinix/theme/app_colors.dart'; // <--- IMPORTANTE
+import 'package:vlinix/theme/app_colors.dart';
 
 class AddServiceScreen extends StatefulWidget {
   final Map<String, dynamic>? serviceToEdit;
@@ -17,7 +17,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
   final _priceController = TextEditingController();
   bool _isLoading = false;
 
-  // --- NOVO: TEMPLATES RÁPIDOS ---
+  // --- TEMPLATES RÁPIDOS ---
   final List<Map<String, dynamic>> _quickTemplates = [
     {'name': 'Lavagem Simples', 'price': '30.00'},
     {'name': 'Lavagem Completa', 'price': '60.00'},
@@ -43,16 +43,20 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
     super.dispose();
   }
 
-  // --- NOVO: FUNÇÃO PARA APLICAR O TEMPLATE ---
+  // --- FUNÇÃO PARA APLICAR O TEMPLATE ---
   void _applyTemplate(String name, String price) {
     setState(() {
       _nameController.text = name;
       _priceController.text = price;
     });
-    // Feedback visual opcional
+
+    final lang = AppLocalizations.of(context)!;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Sugerindo: $name'),
+        content: Text(
+          lang.msgTemplateApplied(name),
+        ), // NOVA CHAVE COM PARÂMETRO
         duration: const Duration(seconds: 1),
         backgroundColor: AppColors.primary,
       ),
@@ -60,10 +64,12 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
   }
 
   Future<void> _save() async {
+    final lang = AppLocalizations.of(context)!;
+
     if (_nameController.text.isEmpty || _priceController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Preencha todos os campos')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(lang.msgFillAllFields)), // Chave existente!
+      );
       return;
     }
 
@@ -94,8 +100,10 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Serviço salvo com sucesso!'),
+          SnackBar(
+            content: Text(
+              lang.msgClientUpdated,
+            ), // Usando uma genérica de sucesso que você já tem (ou pode criar uma "msgServiceSaved")
             backgroundColor: AppColors.success,
           ),
         );
@@ -105,7 +113,9 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao salvar: $e'),
+            content: Text(
+              lang.msgErrorGeneric(e.toString()),
+            ), // CHAVE CRIADA HOJE
             backgroundColor: AppColors.error,
           ),
         );
@@ -121,11 +131,15 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
     final isEditing = widget.serviceToEdit != null;
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
 
+    // Puxa o símbolo de moeda baseado na língua ativa (pt = R$, en/es = $)
+    final currencySymbol = lang.localeName == 'pt' ? 'R\$' : '\$';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Editar Serviço' : lang.btnNew),
+        title: Text(
+          isEditing ? lang.btnEdit : lang.btnNew,
+        ), // Melhor reaproveitar chaves existentes
         centerTitle: true,
-        // Theme cuida das cores
       ),
       backgroundColor: AppColors.background,
       body: Center(
@@ -152,8 +166,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                   : null,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment:
-                    CrossAxisAlignment.start, // <--- ALINHAR À ESQUERDA
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (isLargeScreen) ...[
                     const Center(
@@ -166,10 +179,10 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                     const SizedBox(height: 20),
                   ],
 
-                  // --- NOVO: SESSÃO DE TEMPLATES ---
+                  // --- SESSÃO DE TEMPLATES ---
                   if (!isEditing) ...[
                     Text(
-                      'Sugestões Rápidas',
+                      lang.titleQuickTemplates, // NOVA CHAVE
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -190,7 +203,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           label: Text(
-                            template['name'],
+                            template['name'], // Você pode querer traduzir esses templates futuramente no banco
                             style: const TextStyle(
                               color: AppColors.primary,
                               fontSize: 12,
@@ -216,7 +229,6 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                     decoration: InputDecoration(
                       labelText: lang.labelService,
                       prefixIcon: const Icon(Icons.build_circle_outlined),
-                      // Theme cuida das bordas
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -227,9 +239,10 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: 'Preço (R\$)',
-                      prefixIcon: Icon(Icons.attach_money),
+                    decoration: InputDecoration(
+                      labelText:
+                          '${lang.labelPrice} ($currencySymbol)', // NOVA CHAVE + MOEDA DINÂMICA
+                      prefixIcon: const Icon(Icons.attach_money),
                     ),
                   ),
 

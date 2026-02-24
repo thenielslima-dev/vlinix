@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart'; // <--- Necessário para o NumberFormat
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/widgets/user_profile_menu.dart';
@@ -23,10 +24,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Excluir Serviço?'), // Pode traduzir depois
-        content: const Text(
-          'Se este serviço estiver em algum agendamento, ele não poderá ser excluído.',
-        ),
+        title: Text(lang.dialogDeleteServiceTitle), // CHAVE APLICADA
+        content: Text(lang.dialogDeleteServiceContent), // CHAVE APLICADA
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -50,8 +49,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
       await Supabase.instance.client.from('services').delete().eq('id', id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Serviço excluído com sucesso.'),
+          SnackBar(
+            content: Text(lang.msgServiceDeleted), // CHAVE APLICADA
             backgroundColor: AppColors.success,
           ),
         );
@@ -59,8 +58,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erro: Serviço em uso ou falha ao excluir!'),
+          SnackBar(
+            content: Text(lang.msgErrorDeleteService), // CHAVE APLICADA
             backgroundColor: AppColors.error,
           ),
         );
@@ -80,6 +79,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = AppLocalizations.of(context)!;
+    final currencySymbol = NumberFormat.simpleCurrency(name: '').currencySymbol;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -101,7 +101,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
       body: StreamBuilder(
         stream: _stream,
         builder: (ctx, snap) {
-          if (snap.hasError) return Center(child: Text('Erro: ${snap.error}'));
+          if (snap.hasError)
+            return Center(
+              child: Text(lang.msgErrorGeneric(snap.error.toString())),
+            ); // Usando a chave genérica
           if (!snap.hasData)
             return const Center(child: CircularProgressIndicator());
           final list = snap.data as List;
@@ -117,9 +120,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
                     color: Colors.grey[300],
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Nenhum serviço cadastrado.',
-                    style: TextStyle(color: Colors.grey),
+                  Text(
+                    lang.msgNoServices, // CHAVE APLICADA
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
@@ -160,7 +163,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
-                    "R\$ ${item['price']}",
+                    "$currencySymbol ${item['price']}", // SÍMBOLO DINÂMICO
                     style: const TextStyle(
                       color: AppColors.success,
                       fontWeight: FontWeight.w800,
@@ -186,7 +189,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                             Text(lang.btnEdit),
                           ],
                         ),
-                      ), // <--- CORRIGIDO
+                      ),
                       PopupMenuItem(
                         value: 'delete',
                         child: Row(
@@ -196,7 +199,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                             Text(lang.btnDelete),
                           ],
                         ),
-                      ), // <--- CORRIGIDO
+                      ),
                     ],
                   ),
                 ),

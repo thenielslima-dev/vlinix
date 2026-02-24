@@ -55,7 +55,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
     try {
       final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) throw 'Usuário não identificado';
+      if (user == null)
+        throw 'Usuário não identificado'; // Essa string raramente aparecerá para o usuário final, pois o app exige login.
 
       final amountString = _amountController.text.replaceAll(',', '.');
       final amount = double.parse(amountString);
@@ -79,7 +80,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+            // Substituído para usar a chave de erro genérico
+            content: Text(lang.msgErrorGeneric(e.toString())),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {

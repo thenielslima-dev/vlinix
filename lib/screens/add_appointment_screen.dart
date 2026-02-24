@@ -30,9 +30,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
 
-  bool _isLoading = false; // Controle de loading do botão de Salvar
-  bool _isFetchingInitialData =
-      true; // NOVO: Controle de loading ao abrir a tela
+  bool _isLoading = false;
+  bool _isFetchingInitialData = true;
 
   @override
   void initState() {
@@ -53,7 +52,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   }
 
   Future<void> _fetchInitialData() async {
-    setState(() => _isFetchingInitialData = true); // Inicia o loading
+    setState(() => _isFetchingInitialData = true);
 
     final supabase = Supabase.instance.client;
     try {
@@ -70,8 +69,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
         setState(() {
           _clients = List<Map<String, dynamic>>.from(clientsData);
           _allServices = List<Map<String, dynamic>>.from(servicesData);
-          _isFetchingInitialData =
-              false; // Termina o loading (achando ou não dados)
+          _isFetchingInitialData = false;
         });
 
         if (_selectedClientId != null) {
@@ -95,10 +93,9 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
       }
     } catch (e) {
       debugPrint('Erro init: $e');
-      if (mounted)
-        setState(
-          () => _isFetchingInitialData = false,
-        ); // Para o loading em caso de erro
+      if (mounted) {
+        setState(() => _isFetchingInitialData = false);
+      }
     }
   }
 
@@ -177,7 +174,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                               ),
                             ),
                             subtitle: Text(
-                              'R\$ ${service['price']}',
+                              '${NumberFormat.simpleCurrency(name: '').currencySymbol} ${service['price']}', // Alterado para ser dinâmico ou fixo conforme a formatação local
                               style: TextStyle(color: Colors.grey[600]),
                             ),
                             activeColor: AppColors.accent,
@@ -269,7 +266,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
       final servicesNames = _selectedServices.map((s) => s['name']).join(' + ');
 
       final googleTitle = 'Vlinix: $servicesNames - $clientName';
-      final googleDesc = 'Serviços: $servicesNames\nTotal: R\$ $_totalPrice';
+      final googleDesc =
+          'Serviços: $servicesNames\nTotal: ${NumberFormat.simpleCurrency(name: '').currencySymbol} $_totalPrice'; // Modificado para não fixar o R$
 
       String? googleEventId;
       if (widget.appointmentToEdit == null) {
@@ -332,8 +330,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Agendamento salvo com sucesso!'),
+          SnackBar(
+            content: Text(lang.msgAppointmentSaved), // NOVA CHAVE
             backgroundColor: AppColors.success,
           ),
         );
@@ -342,7 +340,12 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text(
+              lang.msgErrorGeneric(e.toString()),
+            ), // NOVA CHAVE COM PARÂMETRO
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
@@ -350,8 +353,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     }
   }
 
-  // --- NOVO: TELA DE AVISO (EMPTY STATE) ---
   Widget _buildEmptyState() {
+    final lang = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -364,9 +367,9 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
               color: Colors.orange.shade400,
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Quase lá!',
-              style: TextStyle(
+            Text(
+              lang.msgAlmostThere, // NOVA CHAVE
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primary,
@@ -374,19 +377,18 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Você precisa ter pelo menos 1 Cliente (com veículo) e 1 Serviço cadastrados para criar um agendamento.',
+              lang.msgNeedClientAndService, // NOVA CHAVE
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 30),
-
             if (_clients.isEmpty)
               SizedBox(
                 width: 250,
                 height: 45,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.person_add),
-                  label: const Text('Cadastrar Cliente'),
+                  label: Text(lang.btnRegisterClient), // NOVA CHAVE
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                   ),
@@ -396,28 +398,23 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                       MaterialPageRoute(
                         builder: (_) => const AddClientScreen(),
                       ),
-                    ).then(
-                      (_) => _fetchInitialData(),
-                    ); // Recarrega a tela ao voltar
+                    ).then((_) => _fetchInitialData());
                   },
                 ),
               ),
-
             if (_clients.isEmpty && _allServices.isEmpty)
               const SizedBox(height: 16),
-
             if (_allServices.isEmpty)
               SizedBox(
                 width: 250,
                 height: 45,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.design_services),
-                  label: const Text('Cadastrar Serviço'),
+                  label: Text(lang.btnRegisterService), // NOVA CHAVE
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
                   ),
                   onPressed: () {
-                    // Navega para a tela de criar serviço e, ao voltar, recarrega os dados
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -441,20 +438,17 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? lang.titleEditClient : lang.btnNew),
+        title: Text(
+          isEditing ? lang.titleEditClient : lang.btnNew,
+        ), // Mantive titleEditClient aqui, assumindo que você usa a mesma chave para edição de telas
         centerTitle: true,
       ),
       backgroundColor: AppColors.background,
-
-      // --- NOVO: LÓGICA DE EXIBIÇÃO DA TELA ---
       body: _isFetchingInitialData
-          ? const Center(
-              child: CircularProgressIndicator(),
-            ) // Mostra o loading SÓ ENQUANTO BUSCA os dados
+          ? const Center(child: CircularProgressIndicator())
           : (_clients.isEmpty || _allServices.isEmpty)
-          ? _buildEmptyState() // Se terminou de buscar e está vazio, MOSTRA AVISO!
+          ? _buildEmptyState()
           : Center(
-              // Se terminou de buscar e tem dados, MOSTRA O FORMULÁRIO.
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Center(
@@ -515,7 +509,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                                 (v) => DropdownMenuItem(
                                   value: v['id'] as int,
                                   child: Text(
-                                    '${v['model']} - ${v['category'] ?? 'Sem categoria'}',
+                                    '${v['model']} - ${v['category'] ?? lang.labelCategoryNoCategory}', // NOVA CHAVE
                                   ),
                                 ),
                               )
@@ -525,7 +519,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                               : (value) =>
                                     setState(() => _selectedVehicleId = value),
                           hint: _selectedClientId == null
-                              ? const Text('Selecione um cliente primeiro')
+                              ? Text(lang.msgSelectClientFirst) // NOVA CHAVE
                               : null,
                         ),
                         const SizedBox(height: 16),
@@ -572,7 +566,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: Text(
-                                '${lang.labelTotal}: R\$ $_totalPrice',
+                                '${lang.labelTotal}: ${NumberFormat.simpleCurrency(name: '').currencySymbol} $_totalPrice', // Removido R$ fixo
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -592,7 +586,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                                 ),
                                 label: Text(
                                   DateFormat(
-                                    'dd/MM/yyyy',
+                                    'dd/MM/yyyy', // Pode ser interessante mudar o formato dependendo do Locale futuramente
                                   ).format(_selectedDate),
                                   style: const TextStyle(
                                     color: AppColors.primary,

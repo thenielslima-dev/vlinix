@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vlinix/main.dart';
 import 'package:vlinix/theme/app_colors.dart';
-import 'main_screen.dart'; // <--- MUDANÇA 1: Importar MainScreen
+import 'package:vlinix/l10n/app_localizations.dart'; // <--- IMPORTADO
+import 'main_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -30,7 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (event == AuthChangeEvent.signedIn) {
         if (mounted) {
           FocusManager.instance.primaryFocus?.unfocus();
-          // <--- MUDANÇA 2: Redirecionar para MainScreen
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -42,6 +42,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _googleSignIn() async {
     setState(() => _isLoading = true);
+    final lang = AppLocalizations.of(context)!; // Pegando o lang aqui
+
     try {
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
@@ -51,8 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erro ao iniciar Google Login'),
+          SnackBar(
+            content: Text(lang.msgErrorGoogleLogin), // CHAVE APLICADA
             backgroundColor: AppColors.error,
           ),
         );
@@ -63,6 +65,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signIn() async {
     setState(() => _isLoading = true);
+    final lang = AppLocalizations.of(context)!; // Pegando o lang aqui
+
     try {
       await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
@@ -77,8 +81,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erro inesperado.'),
+          SnackBar(
+            content: Text(lang.msgErrorUnexpected), // CHAVE APLICADA
             backgroundColor: AppColors.error,
           ),
         );
@@ -90,6 +94,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
+    final lang = AppLocalizations.of(
+      context,
+    )!; // <--- NOVO: PEGANDO O LANG NO BUILD
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -143,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Hero(
                     tag: 'app_logo',
                     child: Image.asset(
-                      'assets/images/logo_symbol.png', // Logo cheia no login
+                      'assets/images/logo_symbol.png',
                       height: 150,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
@@ -158,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 10),
                   RichText(
                     textAlign: TextAlign.center,
-                    text: TextSpan(
+                    text: const TextSpan(
                       children: [
                         TextSpan(
                           text: 'V-Linix\n',
@@ -188,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 50,
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.login, color: AppColors.primary),
-                        label: const Text('Entrar com Google'),
+                        label: Text(lang.btnLoginGoogle), // CHAVE APLICADA
                         onPressed: _googleSignIn,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primary,
@@ -206,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
-                            "OU",
+                            lang.labelOr, // CHAVE APLICADA
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[400],
@@ -221,9 +228,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   TextField(
                     controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'E-mail',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    decoration: InputDecoration(
+                      labelText: lang.labelEmail, // Chave já existente
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     keyboardType: TextInputType.emailAddress,
                   ),
@@ -231,9 +238,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Senha',
-                      prefixIcon: Icon(Icons.lock_outline),
+                    decoration: InputDecoration(
+                      labelText: lang.labelPassword, // CHAVE APLICADA
+                      prefixIcon: const Icon(Icons.lock_outline),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -254,9 +261,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     borderRadius: BorderRadius.circular(30),
                                   ),
                                 ),
-                                child: const Text(
-                                  'ENTRAR',
-                                  style: TextStyle(
+                                child: Text(
+                                  lang.btnLogin, // CHAVE APLICADA
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1,
                                   ),
@@ -273,9 +280,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 );
                               },
-                              child: const Text(
-                                'Criar conta agora',
-                                style: TextStyle(
+                              child: Text(
+                                lang.btnCreateAccountNow, // CHAVE APLICADA
+                                style: const TextStyle(
                                   color: AppColors.accent,
                                   fontWeight: FontWeight.bold,
                                 ),

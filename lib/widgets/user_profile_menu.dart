@@ -20,8 +20,11 @@ class UserProfileMenu extends StatelessWidget {
         // Dados dinâmicos vindos do "carteiro" (UserService)
         final String? avatarUrl = currentUser?.userMetadata?['avatar_url'];
         final String fullName =
-            currentUser?.userMetadata?['full_name'] ?? 'Usuário';
-        final String displayName = fullName.isNotEmpty ? fullName : 'Usuário';
+            currentUser?.userMetadata?['full_name'] ??
+            lang.labelDefaultUser; // CHAVE APLICADA
+        final String displayName = fullName.isNotEmpty
+            ? fullName
+            : lang.labelDefaultUser; // CHAVE APLICADA
 
         return PopupMenuButton<String>(
           offset: const Offset(0, 50),

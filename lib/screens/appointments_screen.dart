@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
-import 'package:vlinix/widgets/user_profile_menu.dart'; // <--- IMPORTANTE
+import 'package:vlinix/widgets/user_profile_menu.dart';
 import 'add_appointment_screen.dart';
 
 class AppointmentsScreen extends StatefulWidget {
@@ -52,20 +52,25 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
   // --- APP DELETE ---
   Future<void> _deleteAppointment(int id, String? googleEventId) async {
+    final lang = AppLocalizations.of(context)!; // Trazido para cá
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Excluir Agendamento?'),
-        content: const Text('Isso apagará do app e do Google Agenda.'),
+        title: Text(lang.dialogDeleteAppointmentTitle), // NOVA CHAVE
+        content: Text(lang.dialogDeleteAppointmentContent), // NOVA CHAVE
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            child: Text(
+              lang.btnCancel,
+              style: const TextStyle(color: Colors.grey),
+            ), // Usando chave existente
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Excluir'),
+            child: Text(lang.btnDelete), // Usando chave existente
           ),
         ],
       ),
@@ -82,7 +87,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao excluir: $e'),
+            content: Text(
+              lang.msgErrorGeneric(e.toString()),
+            ), // CHAVE RECENTE DA ETAPA ANTERIOR
             backgroundColor: AppColors.error,
           ),
         );
@@ -121,7 +128,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
         title: Text(lang.menuAgenda),
         centerTitle: true,
-        // Theme cuida das cores
       ),
 
       floatingActionButton: FloatingActionButton.extended(
@@ -131,7 +137,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         icon: const Icon(Icons.add),
-        backgroundColor: AppColors.accent, // Dourado
+        backgroundColor: AppColors.accent,
         foregroundColor: Colors.white,
       ),
 
@@ -139,7 +145,10 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         stream: _appointmentsStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Erro: ${snapshot.error}'));
+            // Trocado para usar chave
+            return Center(
+              child: Text(lang.msgErrorGeneric(snapshot.error.toString())),
+            );
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -190,10 +199,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 builder:
                     (context, AsyncSnapshot<List<dynamic>> detailsSnapshot) {
                       if (!detailsSnapshot.hasData) {
-                        return const Card(
+                        return Card(
                           child: ListTile(
-                            leading: CircularProgressIndicator(strokeWidth: 2),
-                            title: Text("Carregando..."),
+                            leading: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                            title: Text(lang.msgLoading), // NOVA CHAVE
                           ),
                         );
                       }
@@ -265,23 +276,33 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                               }
                             },
                             itemBuilder: (context) => [
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'edit',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.edit, color: AppColors.primary),
-                                    SizedBox(width: 8),
-                                    Text('Editar'),
+                                    const Icon(
+                                      Icons.edit,
+                                      color: AppColors.primary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      lang.btnEdit,
+                                    ), // Usando chave existente
                                   ],
                                 ),
                               ),
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'delete',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.delete, color: AppColors.error),
-                                    SizedBox(width: 8),
-                                    Text('Excluir'),
+                                    const Icon(
+                                      Icons.delete,
+                                      color: AppColors.error,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      lang.btnDelete,
+                                    ), // Usando chave existente
                                   ],
                                 ),
                               ),

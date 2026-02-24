@@ -25,8 +25,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
   List<Map<String, dynamic>> _records = [];
 
   DateTime _selectedDate = DateTime.now();
-  String _selectedFilter =
-      'Todos'; // Opções: Todos, Dinheiro, Cartão, Plano Mensal, Pendentes
+  String _selectedFilter = 'Todos';
 
   @override
   void initState() {
@@ -115,18 +114,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
           .gte('start_time', startOfMonth)
           .lte('start_time', endOfMonth);
 
-      // NOVO: Filtrar baseado no que foi selecionado
       if (_selectedFilter == 'Pendentes') {
-        // Busca agendamentos que NÃO estão concluídos nem cancelados
         queryRevenue = queryRevenue.inFilter('status', const [
           'pendente',
           'em_andamento',
         ]);
       } else {
-        // Busca apenas concluídos
         queryRevenue = queryRevenue.eq('status', 'concluido');
 
-        // Se escolheu uma forma de pagamento específica
         if (_selectedFilter != 'Todos') {
           queryRevenue = queryRevenue.eq('payment_method', _selectedFilter);
         }
@@ -134,7 +129,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
       final revenueData = await queryRevenue;
 
-      // 2. BUSCAR DESPESAS (Apenas se o filtro for 'Todos')
+      // 2. BUSCAR DESPESAS
       List<dynamic> expensesData = [];
       if (_selectedFilter == 'Todos') {
         expensesData = await supabase
@@ -176,18 +171,17 @@ class _FinanceScreenState extends State<FinanceScreen> {
             item['status'] == 'pendente' || item['status'] == 'em_andamento';
 
         combinedList.add({
-          'type': isPending
-              ? 'pending'
-              : 'income', // Classificamos pendente diferente
+          'type': isPending ? 'pending' : 'income',
           'date': item['start_time'],
           'title': serviceNames,
           'subtitle': item['clients'] != null
               ? item['clients']['full_name']
               : 'Cliente?',
           'value': appointmentTotal,
-          'method': isPending
-              ? 'Aguardando Pagamento'
-              : (item['payment_method'] ?? 'Sem registro'),
+          // Vamos substituir o status e método no momento de renderizar o Card, usando a string traduzida,
+          // mas passamos uma flag aqui para facilitar
+          'isPending': isPending,
+          'rawMethod': item['payment_method'],
         });
       }
 
@@ -201,10 +195,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
         combinedList.add({
           'type': 'expense',
           'date': item['date'],
-          'title': item['description'] ?? 'Despesa',
-          'subtitle': 'Saída',
+          // Títulos traduzidos serão aplicados na renderização para facilitar
+          'titleRaw': item['description'],
           'value': val,
-          'method': 'N/A',
         });
       }
 
@@ -221,10 +214,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
           if (_selectedFilter == 'Todos') {
             _netBalance = revenueTotal - expenseTotal;
           } else if (_selectedFilter == 'Pendentes') {
-            _netBalance =
-                revenueTotal; // Se for pendente, o saldo é a previsão de entrada
+            _netBalance = revenueTotal;
           } else {
-            _netBalance = revenueTotal; // Saldo do método de pagamento filtrado
+            _netBalance = revenueTotal;
           }
 
           _records = combinedList;
@@ -251,11 +243,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
     ).format(DateTime.parse(isoString).toLocal());
   }
 
-  // --- Função Auxiliar para Definir Cor ---
   Color _getTypeColor(String type) {
     if (type == 'expense') return AppColors.error;
-    if (type == 'pending') return Colors.orange; // Laranja para pendentes
-    return AppColors.success; // Verde para income
+    if (type == 'pending') return Colors.orange;
+    return AppColors.success;
   }
 
   @override
@@ -281,8 +272,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const AddExpenseScreen(), // Mude se o caminho for outro
+                    builder: (context) => const AddExpenseScreen(),
                   ),
                 );
                 if (result == true) _loadFinanceData();
@@ -363,7 +353,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
               children: [
                 _buildFilterChip('Todos', lang.filterAll),
                 const SizedBox(width: 8),
-                _buildFilterChip('Pendentes', 'A Receber'), // NOVO FILTRO
+                _buildFilterChip(
+                  'Pendentes',
+                  lang.filterPending,
+                ), // CHAVE APLICADA
                 const SizedBox(width: 8),
                 _buildFilterChip('Dinheiro', lang.paymentCash),
                 const SizedBox(width: 8),
@@ -398,10 +391,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
               children: [
                 Text(
                   _selectedFilter == 'Todos'
-                      ? "SALDO LÍQUIDO"
+                      ? lang
+                            .labelNetBalance // CHAVE APLICADA
                       : _selectedFilter == 'Pendentes'
-                      ? "TOTAL A RECEBER" // NOVO TÍTULO
-                      : "TOTAL ${_selectedFilter.toUpperCase()}",
+                      ? lang
+                            .labelTotalReceivable // CHAVE APLICADA
+                      : lang.labelTotal(
+                          _selectedFilter.toUpperCase(),
+                        ), // CHAVE APLICADA
                   style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
@@ -426,7 +423,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       ),
                 const SizedBox(height: 16),
 
-                // Só mostra o detalhe Entrada/Saída se estiver em 'Todos'
                 if (!_isLoading && _selectedFilter == 'Todos')
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -504,6 +500,28 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       final isPending = item['type'] == 'pending';
                       final valColor = _getTypeColor(item['type']);
 
+                      // Lógica para traduzir o item corretamente
+                      String displayTitle = '';
+                      String displaySubtitle = '';
+                      String displayMethod = '';
+
+                      if (isExpense) {
+                        displayTitle =
+                            item['titleRaw'] ?? lang.labelExpenseTitle;
+                        displaySubtitle = lang.labelExpenseSubtitle;
+                        displayMethod = 'N/A';
+                      } else {
+                        displayTitle = item['title'];
+                        displaySubtitle = item['subtitle'];
+                        if (isPending) {
+                          displayMethod = lang.statusAwaitingPayment;
+                        } else {
+                          displayMethod =
+                              item['rawMethod'] ??
+                              lang.labelWithoutRegistration;
+                        }
+                      }
+
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Row(
@@ -543,7 +561,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    item['title'],
+                                    displayTitle,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
@@ -554,8 +572,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     isPending
-                                        ? '⏳ ${item['subtitle']}'
-                                        : item['subtitle'], // Adicionado ícone de ampulheta para destacar
+                                        ? '⏳ $displaySubtitle'
+                                        : displaySubtitle,
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: isPending
@@ -580,9 +598,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                     color: valColor,
                                   ),
                                 ),
-                                if (item['method'] != 'N/A')
+                                if (displayMethod != 'N/A')
                                   Text(
-                                    item['method'],
+                                    displayMethod,
                                     style: TextStyle(
                                       fontSize: 10,
                                       color: Colors.grey[500],
