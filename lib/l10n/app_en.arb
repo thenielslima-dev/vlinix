@@ -165,5 +165,10 @@
     "dialogDeleteExpenseTitle": "Delete Expense?",
     "dialogDeleteExpenseContent": "Are you sure you want to delete this expense? This action cannot be undone.",
     "msgExpenseDeleted": "Expense deleted successfully!",
-    "btnRegisterVehicle": "Register Vehicle"
+    "btnRegisterVehicle": "Register Vehicle",
+    "titleNewExpense": "New Expense",
+    "labelDescription": "Reason / Description",
+    "labelDate": "Date: ",
+    "btnAddExpense": "ADD EXPENSE",
+    "msgExpenseSaved": "Expense saved successfully!"
 }

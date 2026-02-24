@@ -553,7 +553,7 @@ abstract class AppLocalizations {
   /// No description provided for @labelDate.
   ///
   /// In pt, this message translates to:
-  /// **'Data'**
+  /// **'Data: '**
   String get labelDate;
 
   /// No description provided for @btnAddExpense.
@@ -1095,6 +1095,18 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Cadastrar Veículo'**
   String get btnRegisterVehicle;
+
+  /// No description provided for @labelDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'Motivo / Descrição'**
+  String get labelDescription;
+
+  /// No description provided for @msgExpenseSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Despesa salva com sucesso!'**
+  String get msgExpenseSaved;
 }
 
 class _AppLocalizationsDelegate

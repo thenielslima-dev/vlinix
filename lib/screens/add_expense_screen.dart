@@ -56,18 +56,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         _amountController.text.replaceAll(',', '.'),
       );
 
-      // CORREÇÃO DEFINITIVA DO FUSO HORÁRIO:
-      // Nós recriamos a data colocando o horário como MEIO-DIA no fuso local.
-      // E então mandamos a string formatada em ISO sem a parte "Z" (UTC).
       final safeDate = DateTime(
         _selectedDate.year,
         _selectedDate.month,
         _selectedDate.day,
-        12, // Força meio-dia para evitar mudança de data no fuso
+        12,
       );
 
-      final String dateStr = safeDate
-          .toIso8601String(); // Supabase aceitará perfeitamente
+      final String dateStr = safeDate.toIso8601String();
 
       final data = {
         'user_id': userId,
@@ -87,8 +83,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Despesa salva com sucesso!'),
+          SnackBar(
+            content: Text(
+              lang.msgExpenseSaved, // CHAVE APLICADA AQUI (Você criou ela no prompt anterior)
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -117,7 +115,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? lang.btnEdit : 'Nova Despesa'),
+        title: Text(
+          isEditing
+              ? lang.btnEdit
+              : lang.titleNewExpense, // CHAVE APLICADA AQUI
+        ),
         centerTitle: true,
       ),
       backgroundColor: AppColors.background,
@@ -149,9 +151,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 children: [
                   TextField(
                     controller: _descController,
-                    decoration: const InputDecoration(
-                      labelText: 'Motivo / Descrição',
-                      prefixIcon: Icon(Icons.description),
+                    decoration: InputDecoration(
+                      labelText: lang.labelDescription, // CHAVE APLICADA AQUI
+                      prefixIcon: const Icon(Icons.description),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -168,9 +170,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      const Text(
-                        'Data: ',
-                        style: TextStyle(
+                      Text(
+                        lang.labelDate, // CHAVE APLICADA AQUI
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -230,7 +232,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           : Text(
                               isEditing
                                   ? lang.btnUpdate.toUpperCase()
-                                  : 'ADICIONAR DESPESA',
+                                  : lang.btnAddExpense, // CHAVE APLICADA AQUI
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1,

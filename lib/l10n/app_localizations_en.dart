@@ -237,7 +237,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelValue => 'Amount';
 
   @override
-  String get labelDate => 'Date';
+  String get labelDate => 'Date: ';
 
   @override
   String get btnAddExpense => 'ADD EXPENSE';
@@ -520,4 +520,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get btnRegisterVehicle => 'Register Vehicle';
+
+  @override
+  String get labelDescription => 'Reason / Description';
+
+  @override
+  String get msgExpenseSaved => 'Expense saved successfully!';
 }
