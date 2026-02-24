@@ -50,7 +50,7 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(lang.dialogDeleteTitle), // Traduzido
+        title: Text(lang.dialogDeleteTitle),
         content: Text(lang.dialogDeleteContent),
         actions: [
           TextButton(
@@ -76,9 +76,7 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              lang.msgClientDeleted,
-            ), // Usando msg generica ou criar nova
+            content: Text(lang.msgClientDeleted),
             backgroundColor: AppColors.success,
           ),
         );
@@ -87,7 +85,7 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(lang.msgErrorDeleteVehicle), // Traduzido
+            content: Text(lang.msgErrorDeleteVehicle),
             backgroundColor: AppColors.error,
           ),
         );
@@ -143,8 +141,8 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: lang.hintSearchVehicle, // Traduzido
-                hintText: lang.hintSearchGeneric, // Traduzido
+                labelText: lang.hintSearchVehicle,
+                hintText: lang.hintSearchGeneric,
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: AppColors.background,
@@ -179,10 +177,13 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
                 final vehicles = allVehicles.where((v) {
                   if (_searchText.isEmpty) return true;
                   final model = (v['model'] ?? '').toString().toLowerCase();
-                  final plate = (v['plate'] ?? '').toString().toLowerCase();
+                  final category = (v['category'] ?? '')
+                      .toString()
+                      .toLowerCase();
                   final ownerName = _getOwnerName(v['client_id']).toLowerCase();
+
                   return model.contains(_searchText) ||
-                      plate.contains(_searchText) ||
+                      category.contains(_searchText) ||
                       ownerName.contains(_searchText);
                 }).toList();
 
@@ -212,6 +213,7 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
                   itemBuilder: (context, index) {
                     final vehicle = vehicles[index];
                     final ownerName = _getOwnerName(vehicle['client_id']);
+                    final category = vehicle['category'] ?? 'Sem categoria';
 
                     return Card(
                       elevation: 0,
@@ -232,9 +234,7 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(
-                              alpha: 0.1,
-                            ), // Correção
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -243,7 +243,7 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
                           ),
                         ),
                         title: Text(
-                          '${vehicle['model']} - ${vehicle['plate']}',
+                          '${vehicle['model']} - $category', // Exibe Modelo e Categoria
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Column(
@@ -300,7 +300,7 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
                                   Text(lang.btnEdit),
                                 ],
                               ),
-                            ), // Traduzido
+                            ),
                             PopupMenuItem(
                               value: 'delete',
                               child: Row(
@@ -313,7 +313,7 @@ class _AllVehiclesScreenState extends State<AllVehiclesScreen> {
                                   Text(lang.btnDelete),
                                 ],
                               ),
-                            ), // Traduzido
+                            ),
                           ],
                         ),
                       ),

@@ -5,7 +5,7 @@ import 'package:vlinix/main.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/widgets/user_profile_menu.dart';
-import 'package:vlinix/services/google_calendar_service.dart'; // <--- SERVIÇO CORRIGIDO
+import 'package:vlinix/services/google_calendar_service.dart';
 
 import 'add_client_screen.dart';
 import 'add_vehicle_screen.dart';
@@ -50,10 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
         59,
       ).toUtc().toIso8601String();
 
+      // --- CORREÇÃO AQUI: Trocado 'plate' por 'category' ---
       const selectQuery = '''
         *,
         clients(full_name),
-        vehicles(model, plate),
+        vehicles(model, category), 
         services(name),
         appointment_services(id, price, completed, services(name))
       ''';
@@ -96,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       // 1. LÓGICA DO GOOGLE CALENDAR
-      // Busca dados atuais do agendamento
       final currentData = await supabase
           .from('appointments')
           .select(
@@ -106,25 +106,18 @@ class _HomeScreenState extends State<HomeScreen> {
           .single();
 
       final String? currentGoogleId = currentData['google_event_id'];
-      String? newGoogleEventId; // Vai guardar o ID se criarmos um novo
+      String? newGoogleEventId;
 
-      // A. SE FOR CANCELAR -> APAGA DO GOOGLE
       if (newStatus == 'cancelado') {
         if (currentGoogleId != null && currentGoogleId.isNotEmpty) {
           await GoogleCalendarService.instance.deleteEvent(currentGoogleId);
           feedbackMsg = 'Removido da Agenda Google 📅';
         }
-      }
-      // B. SE FOR REATIVAR (De Cancelado/Concluído -> Pendente) -> CRIA NO GOOGLE
-      else if (newStatus == 'pendente') {
-        // Prepara dados para o evento
+      } else if (newStatus == 'pendente') {
         final clientName = currentData['clients']['full_name'];
         final startTime = DateTime.parse(currentData['start_time']);
-        final endTime = startTime.add(
-          const Duration(hours: 1),
-        ); // Duração padrão 1h
+        final endTime = startTime.add(const Duration(hours: 1));
 
-        // Monta título e descrição
         final items = currentData['appointment_services'] as List;
         final servicesNames = items
             .map((i) => i['services']['name'])
@@ -135,7 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
         final desc =
             'Reativado - Serviços: $servicesNames\nTotal: R\$ $totalPrice';
 
-        // Cria no Google
         newGoogleEventId = await GoogleCalendarService.instance.insertEvent(
           title: title,
           description: desc,
@@ -157,12 +149,9 @@ class _HomeScreenState extends State<HomeScreen> {
         updateData['payment_method'] = null;
       }
 
-      // Se geramos um novo ID do Google (na reativação), salvamos ele
       if (newGoogleEventId != null) {
         updateData['google_event_id'] = newGoogleEventId;
-      }
-      // Se cancelamos, limpamos o ID para não tentar apagar de novo depois
-      else if (newStatus == 'cancelado') {
+      } else if (newStatus == 'cancelado') {
         updateData['google_event_id'] = null;
       }
 
@@ -191,7 +180,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-        // Se tiver mensagem do Google, mostra ela também
         if (feedbackMsg.isNotEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -380,8 +368,9 @@ class _HomeScreenState extends State<HomeScreen> {
       'clientName': apt['clients'] != null
           ? apt['clients']['full_name']
           : 'Desconhecido',
+      // --- CORREÇÃO AQUI: Mudança de plate para category ---
       'vehicleInfo': apt['vehicles'] != null
-          ? "${apt['vehicles']['model']} (${apt['vehicles']['plate']})"
+          ? "${apt['vehicles']['model']} - ${apt['vehicles']['category'] ?? 'Sem categoria'}"
           : 'Carro?',
       'serviceNames': serviceNames,
       'totalPrice': totalPrice,

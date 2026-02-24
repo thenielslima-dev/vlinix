@@ -88,5 +88,20 @@
     "btnCancelAppointment": "Cancelar Agendamento",
     "msgAppointmentCancelled": "Agendamento cancelado!",
     "btnConfirm": "Confirmar",
-    "msgConfirmCancel": "Tem certeza que deseja cancelar este agendamento?"
+    "msgConfirmCancel": "Tem certeza que deseja cancelar este agendamento?",
+    "msgAlmostThere": "Quase lá!",
+    "msgNeedClientAndService": "Você precisa ter pelo menos 1 Cliente (com veículo) e 1 Serviço cadastrados para criar um agendamento.",
+    "btnRegisterClient": "Cadastrar Cliente",
+    "btnRegisterService": "Cadastrar Serviço",
+    "msgSelectClientFirst": "Selecione um cliente primeiro",
+    "labelCategoryNoCategory": "Sem categoria",
+    "msgAppointmentSaved": "Agendamento salvo com sucesso!",
+    "msgErrorGeneric": "Erro: {error}",
+    "labelZipcode": "CEP",
+    "labelNumber": "Número",
+    "labelStreet": "Rua / Logradouro",
+    "labelCity": "Cidade",
+    "labelState": "Estado",
+    "msgEmptyName": "Informe o nome",
+    "msgErrorSearchZip": "Erro ao buscar CEP"
 }

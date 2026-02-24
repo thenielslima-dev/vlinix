@@ -279,4 +279,52 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get msgConfirmCancel =>
       'Are you sure you want to cancel this appointment?';
+
+  @override
+  String get msgAlmostThere => 'Almost there!';
+
+  @override
+  String get msgNeedClientAndService =>
+      'You need to have at least 1 Client (with a vehicle) and 1 Service registered to create an appointment.';
+
+  @override
+  String get btnRegisterClient => 'Register Client';
+
+  @override
+  String get btnRegisterService => 'Register Service';
+
+  @override
+  String get msgSelectClientFirst => 'Select a client first';
+
+  @override
+  String get labelCategoryNoCategory => 'No category';
+
+  @override
+  String get msgAppointmentSaved => 'Appointment saved successfully!';
+
+  @override
+  String msgErrorGeneric(Object error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get labelZipcode => 'Zipcode';
+
+  @override
+  String get labelNumber => 'Number';
+
+  @override
+  String get labelStreet => 'Street';
+
+  @override
+  String get labelCity => 'City';
+
+  @override
+  String get labelState => 'State';
+
+  @override
+  String get msgEmptyName => 'Please enter a name';
+
+  @override
+  String get msgErrorSearchZip => 'Error searching Zipcode';
 }

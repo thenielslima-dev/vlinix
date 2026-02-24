@@ -639,6 +639,96 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Tem certeza que deseja cancelar este agendamento?'**
   String get msgConfirmCancel;
+
+  /// No description provided for @msgAlmostThere.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quase lá!'**
+  String get msgAlmostThere;
+
+  /// No description provided for @msgNeedClientAndService.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você precisa ter pelo menos 1 Cliente (com veículo) e 1 Serviço cadastrados para criar um agendamento.'**
+  String get msgNeedClientAndService;
+
+  /// No description provided for @btnRegisterClient.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cadastrar Cliente'**
+  String get btnRegisterClient;
+
+  /// No description provided for @btnRegisterService.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cadastrar Serviço'**
+  String get btnRegisterService;
+
+  /// No description provided for @msgSelectClientFirst.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione um cliente primeiro'**
+  String get msgSelectClientFirst;
+
+  /// No description provided for @labelCategoryNoCategory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem categoria'**
+  String get labelCategoryNoCategory;
+
+  /// No description provided for @msgAppointmentSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agendamento salvo com sucesso!'**
+  String get msgAppointmentSaved;
+
+  /// No description provided for @msgErrorGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro: {error}'**
+  String msgErrorGeneric(Object error);
+
+  /// No description provided for @labelZipcode.
+  ///
+  /// In pt, this message translates to:
+  /// **'CEP'**
+  String get labelZipcode;
+
+  /// No description provided for @labelNumber.
+  ///
+  /// In pt, this message translates to:
+  /// **'Número'**
+  String get labelNumber;
+
+  /// No description provided for @labelStreet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rua / Logradouro'**
+  String get labelStreet;
+
+  /// No description provided for @labelCity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidade'**
+  String get labelCity;
+
+  /// No description provided for @labelState.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estado'**
+  String get labelState;
+
+  /// No description provided for @msgEmptyName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe o nome'**
+  String get msgEmptyName;
+
+  /// No description provided for @msgErrorSearchZip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao buscar CEP'**
+  String get msgErrorSearchZip;
 }
 
 class _AppLocalizationsDelegate

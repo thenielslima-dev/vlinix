@@ -279,4 +279,52 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get msgConfirmCancel =>
       'Tem certeza que deseja cancelar este agendamento?';
+
+  @override
+  String get msgAlmostThere => 'Quase lá!';
+
+  @override
+  String get msgNeedClientAndService =>
+      'Você precisa ter pelo menos 1 Cliente (com veículo) e 1 Serviço cadastrados para criar um agendamento.';
+
+  @override
+  String get btnRegisterClient => 'Cadastrar Cliente';
+
+  @override
+  String get btnRegisterService => 'Cadastrar Serviço';
+
+  @override
+  String get msgSelectClientFirst => 'Selecione um cliente primeiro';
+
+  @override
+  String get labelCategoryNoCategory => 'Sem categoria';
+
+  @override
+  String get msgAppointmentSaved => 'Agendamento salvo com sucesso!';
+
+  @override
+  String msgErrorGeneric(Object error) {
+    return 'Erro: $error';
+  }
+
+  @override
+  String get labelZipcode => 'CEP';
+
+  @override
+  String get labelNumber => 'Número';
+
+  @override
+  String get labelStreet => 'Rua / Logradouro';
+
+  @override
+  String get labelCity => 'Cidade';
+
+  @override
+  String get labelState => 'Estado';
+
+  @override
+  String get msgEmptyName => 'Informe o nome';
+
+  @override
+  String get msgErrorSearchZip => 'Erro ao buscar CEP';
 }

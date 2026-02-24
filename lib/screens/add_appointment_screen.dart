@@ -3,8 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
-// IMPORTANTE:
 import 'package:vlinix/services/google_calendar_service.dart';
+
+// Importe para o botão de atalho do Cliente funcionar
+import 'add_client_screen.dart';
+import 'add_service_screen.dart';
 
 class AddAppointmentScreen extends StatefulWidget {
   final Map<String, dynamic>? appointmentToEdit;
@@ -27,7 +30,9 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
 
-  bool _isLoading = false;
+  bool _isLoading = false; // Controle de loading do botão de Salvar
+  bool _isFetchingInitialData =
+      true; // NOVO: Controle de loading ao abrir a tela
 
   @override
   void initState() {
@@ -48,6 +53,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   }
 
   Future<void> _fetchInitialData() async {
+    setState(() => _isFetchingInitialData = true); // Inicia o loading
+
     final supabase = Supabase.instance.client;
     try {
       final clientsData = await supabase
@@ -63,6 +70,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
         setState(() {
           _clients = List<Map<String, dynamic>>.from(clientsData);
           _allServices = List<Map<String, dynamic>>.from(servicesData);
+          _isFetchingInitialData =
+              false; // Termina o loading (achando ou não dados)
         });
 
         if (_selectedClientId != null) {
@@ -86,6 +95,10 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
       }
     } catch (e) {
       debugPrint('Erro init: $e');
+      if (mounted)
+        setState(
+          () => _isFetchingInitialData = false,
+        ); // Para o loading em caso de erro
     }
   }
 
@@ -258,7 +271,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
       final googleTitle = 'Vlinix: $servicesNames - $clientName';
       final googleDesc = 'Serviços: $servicesNames\nTotal: R\$ $_totalPrice';
 
-      // --- USANDO O SERVIÇO NOVO ---
       String? googleEventId;
       if (widget.appointmentToEdit == null) {
         googleEventId = await GoogleCalendarService.instance.insertEvent(
@@ -338,6 +350,89 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     }
   }
 
+  // --- NOVO: TELA DE AVISO (EMPTY STATE) ---
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 80,
+              color: Colors.orange.shade400,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Quase lá!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Você precisa ter pelo menos 1 Cliente (com veículo) e 1 Serviço cadastrados para criar um agendamento.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 30),
+
+            if (_clients.isEmpty)
+              SizedBox(
+                width: 250,
+                height: 45,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.person_add),
+                  label: const Text('Cadastrar Cliente'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AddClientScreen(),
+                      ),
+                    ).then(
+                      (_) => _fetchInitialData(),
+                    ); // Recarrega a tela ao voltar
+                  },
+                ),
+              ),
+
+            if (_clients.isEmpty && _allServices.isEmpty)
+              const SizedBox(height: 16),
+
+            if (_allServices.isEmpty)
+              SizedBox(
+                width: 250,
+                height: 45,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.design_services),
+                  label: const Text('Cadastrar Serviço'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                  ),
+                  onPressed: () {
+                    // Navega para a tela de criar serviço e, ao voltar, recarrega os dados
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AddServiceScreen(),
+                      ),
+                    ).then((_) => _fetchInitialData());
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final lang = AppLocalizations.of(context)!;
@@ -350,9 +445,16 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
         centerTitle: true,
       ),
       backgroundColor: AppColors.background,
-      body: _clients.isEmpty || _allServices.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+
+      // --- NOVO: LÓGICA DE EXIBIÇÃO DA TELA ---
+      body: _isFetchingInitialData
+          ? const Center(
+              child: CircularProgressIndicator(),
+            ) // Mostra o loading SÓ ENQUANTO BUSCA os dados
+          : (_clients.isEmpty || _allServices.isEmpty)
+          ? _buildEmptyState() // Se terminou de buscar e está vazio, MOSTRA AVISO!
           : Center(
+              // Se terminou de buscar e tem dados, MOSTRA O FORMULÁRIO.
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Center(
@@ -412,7 +514,9 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                               .map(
                                 (v) => DropdownMenuItem(
                                   value: v['id'] as int,
-                                  child: Text('${v['model']} (${v['plate']})'),
+                                  child: Text(
+                                    '${v['model']} - ${v['category'] ?? 'Sem categoria'}',
+                                  ),
                                 ),
                               )
                               .toList(),

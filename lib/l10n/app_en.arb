@@ -88,5 +88,20 @@
     "btnCancelAppointment": "Cancel Appointment",
     "msgAppointmentCancelled": "Appointment cancelled!",
     "btnConfirm": "Confirm",
-    "msgConfirmCancel": "Are you sure you want to cancel this appointment?"
+    "msgConfirmCancel": "Are you sure you want to cancel this appointment?",
+    "msgAlmostThere": "Almost there!",
+    "msgNeedClientAndService": "You need to have at least 1 Client (with a vehicle) and 1 Service registered to create an appointment.",
+    "btnRegisterClient": "Register Client",
+    "btnRegisterService": "Register Service",
+    "msgSelectClientFirst": "Select a client first",
+    "labelCategoryNoCategory": "No category",
+    "msgAppointmentSaved": "Appointment saved successfully!",
+    "msgErrorGeneric": "Error: {error}",
+    "labelZipcode": "Zipcode",
+    "labelNumber": "Number",
+    "labelStreet": "Street",
+    "labelCity": "City",
+    "labelState": "State",
+    "msgEmptyName": "Please enter a name",
+    "msgErrorSearchZip": "Error searching Zipcode"
 }

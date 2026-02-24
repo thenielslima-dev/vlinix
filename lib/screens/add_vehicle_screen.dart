@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
-import 'package:vlinix/theme/app_colors.dart'; // <--- IMPORTANTE
+import 'package:vlinix/theme/app_colors.dart';
 
 class AddVehicleScreen extends StatefulWidget {
   final Map<String, dynamic>? vehicleToEdit;
@@ -14,12 +14,44 @@ class AddVehicleScreen extends StatefulWidget {
 
 class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _modelController = TextEditingController();
-  final _plateController = TextEditingController();
   final _colorController = TextEditingController();
 
   int? _selectedClientId;
+  String? _selectedCategory; // Novo estado para a categoria/tamanho
   List<Map<String, dynamic>> _clients = [];
   bool _isLoading = false;
+
+  // --- LISTAS PRÉ-DEFINIDAS ---
+  final List<String> _vehicleSizes = [
+    'Sedan',
+    'SUV',
+    'Large SUV',
+    'Truck',
+    'Minivan',
+  ];
+
+  final List<String> _vehicleModels = [
+    'Ford F-150',
+    'Chevrolet Silverado',
+    'Ram 1500',
+    'Toyota RAV4',
+    'Toyota Camry',
+    'Toyota Corolla',
+    'Honda CR-V',
+    'Honda Civic',
+    'Nissan Rogue',
+    'Jeep Grand Cherokee',
+    'Tesla Model Y',
+    'Tesla Model 3',
+    'BMW 3 Series',
+    'BMW X5',
+    'Mercedes-Benz C-Class',
+    'Mercedes-Benz GLE',
+    'Lexus RX',
+    'Audi Q5',
+    'Porsche Macan',
+    'Land Rover Range Rover',
+  ];
 
   @override
   void initState() {
@@ -27,10 +59,11 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     _fetchClients();
 
     if (widget.vehicleToEdit != null) {
-      _modelController.text = widget.vehicleToEdit!['model'];
-      _plateController.text = widget.vehicleToEdit!['plate'];
-      _colorController.text = widget.vehicleToEdit!['color'];
+      _modelController.text = widget.vehicleToEdit!['model'] ?? '';
+      _colorController.text = widget.vehicleToEdit!['color'] ?? '';
       _selectedClientId = widget.vehicleToEdit!['client_id'];
+      _selectedCategory =
+          widget.vehicleToEdit!['category']; // Carrega categoria
     }
   }
 
@@ -48,10 +81,12 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   }
 
   Future<void> _save() async {
-    if (_modelController.text.isEmpty || _selectedClientId == null) {
+    if (_modelController.text.isEmpty ||
+        _selectedClientId == null ||
+        _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Selecione um cliente e preencha o modelo.'),
+          content: Text('Selecione um cliente, tamanho e preencha o modelo.'),
         ),
       );
       return;
@@ -64,16 +99,15 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       final data = {
         'user_id': userId,
         'client_id': _selectedClientId,
+        'category': _selectedCategory, // Salva o tamanho no BD
         'model': _modelController.text.trim(),
-        'plate': _plateController.text.trim(),
         'color': _colorController.text.trim(),
+        // 'plate' foi removido daqui
       };
 
       if (widget.vehicleToEdit == null) {
-        // Criar
         await Supabase.instance.client.from('vehicles').insert(data);
       } else {
-        // Editar
         await Supabase.instance.client
             .from('vehicles')
             .update(data)
@@ -113,7 +147,6 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       appBar: AppBar(
         title: Text(isEditing ? lang.titleEditVehicle : 'Novo Veículo'),
         centerTitle: true,
-        // Theme cuida das cores
       ),
       backgroundColor: AppColors.background,
       body: _clients.isEmpty
@@ -158,7 +191,6 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           decoration: InputDecoration(
                             labelText: lang.labelClient,
                             prefixIcon: const Icon(Icons.person),
-                            // Theme cuida das bordas
                           ),
                           items: _clients.map((c) {
                             return DropdownMenuItem(
@@ -171,23 +203,63 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Modelo
-                        TextField(
-                          controller: _modelController,
-                          decoration: InputDecoration(
-                            labelText: lang.labelModel,
-                            prefixIcon: const Icon(Icons.directions_car),
+                        // Dropdown Categoria / Tamanho
+                        DropdownButtonFormField<String>(
+                          value: _selectedCategory,
+                          decoration: const InputDecoration(
+                            labelText: 'Tamanho / Categoria',
+                            prefixIcon: Icon(Icons.category),
                           ),
+                          items: _vehicleSizes.map((size) {
+                            return DropdownMenuItem(
+                              value: size,
+                              child: Text(size),
+                            );
+                          }).toList(),
+                          onChanged: (val) =>
+                              setState(() => _selectedCategory = val),
                         ),
                         const SizedBox(height: 16),
 
-                        // Placa
-                        TextField(
-                          controller: _plateController,
-                          decoration: InputDecoration(
-                            labelText: lang.labelPlate,
-                            prefixIcon: const Icon(Icons.pin),
+                        // Autocomplete Modelo
+                        Autocomplete<String>(
+                          initialValue: TextEditingValue(
+                            text: _modelController.text,
                           ),
+                          optionsBuilder: (TextEditingValue textEditingValue) {
+                            if (textEditingValue.text.isEmpty) {
+                              return const Iterable<String>.empty();
+                            }
+                            return _vehicleModels.where((String option) {
+                              return option.toLowerCase().contains(
+                                textEditingValue.text.toLowerCase(),
+                              );
+                            });
+                          },
+                          onSelected: (String selection) {
+                            _modelController.text = selection;
+                          },
+                          fieldViewBuilder:
+                              (
+                                context,
+                                controller,
+                                focusNode,
+                                onFieldSubmitted,
+                              ) {
+                                return TextFormField(
+                                  controller: controller,
+                                  focusNode: focusNode,
+                                  onChanged: (val) => _modelController.text =
+                                      val, // Mantém o controller atualizado mesmo se digitar algo fora da lista
+                                  decoration: InputDecoration(
+                                    labelText: lang.labelModel,
+                                    prefixIcon: const Icon(
+                                      Icons.directions_car,
+                                    ),
+                                    hintText: 'Ex: Tesla Model 3',
+                                  ),
+                                );
+                              },
                         ),
                         const SizedBox(height: 16),
 

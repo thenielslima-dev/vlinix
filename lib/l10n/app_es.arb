@@ -88,5 +88,20 @@
     "btnCancelAppointment": "Cancelar Cita",
     "msgAppointmentCancelled": "¡Cita cancelada!",
     "btnConfirm": "Confirmar",
-    "msgConfirmCancel": "¿Está seguro de que desea cancelar esta cita?"
+    "msgConfirmCancel": "¿Está seguro de que desea cancelar esta cita?",
+    "msgAlmostThere": "¡Casi listo!",
+    "msgNeedClientAndService": "Necesita tener al menos 1 Cliente (con vehículo) y 1 Servicio registrado para crear una cita.",
+    "btnRegisterClient": "Registrar Cliente",
+    "btnRegisterService": "Registrar Servicio",
+    "msgSelectClientFirst": "Seleccione un cliente primero",
+    "labelCategoryNoCategory": "Sin categoría",
+    "msgAppointmentSaved": "¡Cita guardada con éxito!",
+    "msgErrorGeneric": "Error: {error}",
+    "labelZipcode": "Código Postal",
+    "labelNumber": "Número",
+    "labelStreet": "Calle / Avenida",
+    "labelCity": "Ciudad",
+    "labelState": "Estado",
+    "msgEmptyName": "Ingrese el nombre",
+    "msgErrorSearchZip": "Error al buscar Código Postal"
 }

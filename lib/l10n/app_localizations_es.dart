@@ -281,4 +281,52 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get msgConfirmCancel =>
       '¿Está seguro de que desea cancelar esta cita?';
+
+  @override
+  String get msgAlmostThere => '¡Casi listo!';
+
+  @override
+  String get msgNeedClientAndService =>
+      'Necesita tener al menos 1 Cliente (con vehículo) y 1 Servicio registrado para crear una cita.';
+
+  @override
+  String get btnRegisterClient => 'Registrar Cliente';
+
+  @override
+  String get btnRegisterService => 'Registrar Servicio';
+
+  @override
+  String get msgSelectClientFirst => 'Seleccione un cliente primero';
+
+  @override
+  String get labelCategoryNoCategory => 'Sin categoría';
+
+  @override
+  String get msgAppointmentSaved => '¡Cita guardada con éxito!';
+
+  @override
+  String msgErrorGeneric(Object error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get labelZipcode => 'Código Postal';
+
+  @override
+  String get labelNumber => 'Número';
+
+  @override
+  String get labelStreet => 'Calle / Avenida';
+
+  @override
+  String get labelCity => 'Ciudad';
+
+  @override
+  String get labelState => 'Estado';
+
+  @override
+  String get msgEmptyName => 'Ingrese el nombre';
+
+  @override
+  String get msgErrorSearchZip => 'Error al buscar Código Postal';
 }

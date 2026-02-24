@@ -17,6 +17,15 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
   final _priceController = TextEditingController();
   bool _isLoading = false;
 
+  // --- NOVO: TEMPLATES RÁPIDOS ---
+  final List<Map<String, dynamic>> _quickTemplates = [
+    {'name': 'Lavagem Simples', 'price': '30.00'},
+    {'name': 'Lavagem Completa', 'price': '60.00'},
+    {'name': 'Polimento', 'price': '150.00'},
+    {'name': 'Higienização Interna', 'price': '100.00'},
+    {'name': 'Vitrificação', 'price': '400.00'},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +41,22 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
     _nameController.dispose();
     _priceController.dispose();
     super.dispose();
+  }
+
+  // --- NOVO: FUNÇÃO PARA APLICAR O TEMPLATE ---
+  void _applyTemplate(String name, String price) {
+    setState(() {
+      _nameController.text = name;
+      _priceController.text = price;
+    });
+    // Feedback visual opcional
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Sugerindo: $name'),
+        duration: const Duration(seconds: 1),
+        backgroundColor: AppColors.primary,
+      ),
+    );
   }
 
   Future<void> _save() async {
@@ -127,14 +152,62 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                   : null,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // <--- ALINHAR À ESQUERDA
                 children: [
                   if (isLargeScreen) ...[
-                    const Icon(
-                      Icons.local_offer,
-                      size: 60,
-                      color: AppColors.primary,
+                    const Center(
+                      child: Icon(
+                        Icons.local_offer,
+                        size: 60,
+                        color: AppColors.primary,
+                      ),
                     ),
                     const SizedBox(height: 20),
+                  ],
+
+                  // --- NOVO: SESSÃO DE TEMPLATES ---
+                  if (!isEditing) ...[
+                    Text(
+                      'Sugestões Rápidas',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: _quickTemplates.map((template) {
+                        return ActionChip(
+                          backgroundColor: AppColors.accent.withValues(
+                            alpha: 0.1,
+                          ),
+                          side: BorderSide.none,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          label: Text(
+                            template['name'],
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          onPressed: () => _applyTemplate(
+                            template['name'],
+                            template['price'],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Divider(),
+                    ),
                   ],
 
                   // Campo Nome
