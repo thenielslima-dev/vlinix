@@ -221,5 +221,19 @@
     "expenseCatFood": "Alimentação",
     "expenseCatRent": "Aluguel",
     "expenseCatOthers": "Outros",
-    "labelWhichExpense": "Qual despesa?"
+    "labelWhichExpense": "Qual despesa?",
+    "labelTip": "Gorjeta (Opcional)",
+    "dialogPaymentTip": "Houve gorjeta?",
+    "excelColTip": "Gorjeta",
+    "msgGoogleReactivated": "Reativado - Serviços: {services}\nTotal: {total}",
+    "@msgGoogleReactivated": {
+      "placeholders": {
+        "services": {
+          "type": "String"
+        },
+        "total": {
+          "type": "String"
+        }
+      }
+    }
 }

@@ -221,5 +221,19 @@
     "expenseCatFood": "Food",
     "expenseCatRent": "Rent",
     "expenseCatOthers": "Others",
-    "labelWhichExpense": "Which expense?"
+    "labelWhichExpense": "Which expense?",
+    "labelTip": "Tip (Optional)",
+    "dialogPaymentTip": "Was there a tip?",
+    "excelColTip": "Tip",
+    "msgGoogleReactivated": "Reactivated - Services: {services}\nTotal: {total}",
+    "@msgGoogleReactivated": {
+      "placeholders": {
+        "services": {
+          "type": "String"
+        },
+        "total": {
+          "type": "String"
+        }
+      }
+    }
 }

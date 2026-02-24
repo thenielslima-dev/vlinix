@@ -626,4 +626,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get labelWhichExpense => '¿Qué gasto?';
+
+  @override
+  String get labelTip => 'Propina (Opcional)';
+
+  @override
+  String get dialogPaymentTip => '¿Hubo propina?';
+
+  @override
+  String get excelColTip => 'Propina';
+
+  @override
+  String msgGoogleReactivated(String services, String total) {
+    return 'Reactivado - Servicios: $services\nTotal: $total';
+  }
 }

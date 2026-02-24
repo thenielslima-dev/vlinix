@@ -622,4 +622,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get labelWhichExpense => 'Which expense?';
+
+  @override
+  String get labelTip => 'Tip (Optional)';
+
+  @override
+  String get dialogPaymentTip => 'Was there a tip?';
+
+  @override
+  String get excelColTip => 'Tip';
+
+  @override
+  String msgGoogleReactivated(String services, String total) {
+    return 'Reactivated - Services: $services\nTotal: $total';
+  }
 }

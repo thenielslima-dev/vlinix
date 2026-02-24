@@ -85,17 +85,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // --- ATUALIZAÇÃO DO STATUS (COM GOOGLE CALENDAR) ---
+  // --- ATUALIZAÇÃO DO STATUS ---
   Future<void> _updateStatus(
     int id,
     String newStatus, {
     String? paymentMethod,
+    double? tipAmount,
   }) async {
     final supabase = Supabase.instance.client;
     String feedbackMsg = '';
-
-    // Obter o lang aqui com cuidado se a função for iniciada por um contexto que pode não estar mais na árvore
-    // Idealmente passamos a String já traduzida ou pegamos depois de validar se está mounted, mas vamos resolver isso logo em seguida.
+    // Pegando a localização com segurança antes de operações assíncronas extensas
+    final lang = AppLocalizations.of(context)!;
 
     try {
       // 1. LÓGICA DO GOOGLE CALENDAR
@@ -113,7 +113,6 @@ class _HomeScreenState extends State<HomeScreen> {
       if (newStatus == 'cancelado') {
         if (currentGoogleId != null && currentGoogleId.isNotEmpty) {
           await GoogleCalendarService.instance.deleteEvent(currentGoogleId);
-          // Atualiza a msg no momento em que for mostrar, para garantir o Context
         }
       } else if (newStatus == 'pendente') {
         final clientName = currentData['clients']['full_name'];
@@ -127,12 +126,13 @@ class _HomeScreenState extends State<HomeScreen> {
         final totalPrice = items.fold(0.0, (sum, i) => sum + (i['price'] ?? 0));
 
         final title = 'Vlinix: $servicesNames - $clientName';
-
-        // Simbolo da moeda para a desc do google (vamos assumir o locale default, pois o google envia isso pra nuvem)
         final currency = NumberFormat.simpleCurrency(name: '').currencySymbol;
 
-        final desc =
-            'Reativado - Serviços: $servicesNames\nTotal: $currency $totalPrice';
+        // --- MUDANÇA DA TRADUÇÃO DO GOOGLE CALENDAR AQUI ---
+        final desc = lang.msgGoogleReactivated(
+          servicesNames,
+          '$currency $totalPrice',
+        );
 
         newGoogleEventId = await GoogleCalendarService.instance.insertEvent(
           title: title,
@@ -147,8 +147,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (newStatus == 'concluido') {
         updateData['payment_method'] = paymentMethod;
+        if (tipAmount != null) {
+          updateData['tip_amount'] = tipAmount;
+        }
       } else {
         updateData['payment_method'] = null;
+        updateData['tip_amount'] = 0.0;
       }
 
       if (newGoogleEventId != null) {
@@ -162,7 +166,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // 3. FEEDBACK VISUAL
       if (mounted) {
-        final lang = AppLocalizations.of(context)!;
         String msg = '';
         Color color = Colors.blue;
 
@@ -184,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
           msg = '${lang.msgAppointmentCancelled} 🚫';
           color = Colors.grey;
         } else {
-          msg = '${lang.statusPending} 🟠'; // Reativado
+          msg = '${lang.statusPending} 🟠';
           color = Colors.orange;
         }
 
@@ -207,9 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.msgErrorGeneric(e.toString()),
-            ),
+            content: Text(lang.msgErrorGeneric(e.toString())),
             backgroundColor: AppColors.error,
           ),
         );
@@ -307,59 +308,138 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showPaymentDialog(int appointmentId) {
     final lang = AppLocalizations.of(context)!;
+    final currencySymbol = lang.localeName == 'pt' ? 'R\$' : '\$';
+
+    final TextEditingController tipController = TextEditingController();
+    bool hasTip = false;
+
     showDialog(
       context: context,
       builder: (ctx) {
-        return SimpleDialog(
-          title: Text(lang.dialogPaymentTitle),
-          children: [
-            _buildPaymentOption(
-              ctx,
-              appointmentId,
-              lang.paymentCash,
-              Icons.money,
-              Colors.green,
-            ),
-            _buildPaymentOption(
-              ctx,
-              appointmentId,
-              lang.paymentCard,
-              Icons.credit_card,
-              Colors.blue,
-            ),
-            _buildPaymentOption(
-              ctx,
-              appointmentId,
-              lang.paymentPlan,
-              Icons.calendar_today,
-              Colors.purple,
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(lang.dialogPaymentTitle),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      lang.dialogPaymentTip,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    value: hasTip,
+                    activeColor: AppColors.accent,
+                    onChanged: (val) {
+                      setStateDialog(() {
+                        hasTip = val ?? false;
+                        if (!hasTip) tipController.clear();
+                      });
+                    },
+                  ),
+                  if (hasTip)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: TextField(
+                        controller: tipController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: '${lang.labelTip} ($currencySymbol)',
+                          prefixIcon: const Icon(Icons.attach_money),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  const Divider(),
+                  const SizedBox(height: 8),
+
+                  _buildPaymentOption(
+                    ctx,
+                    appointmentId,
+                    lang.paymentCash,
+                    'dinheiro',
+                    Icons.money,
+                    Colors.green,
+                    tipController,
+                  ),
+                  _buildPaymentOption(
+                    ctx,
+                    appointmentId,
+                    lang.paymentCard,
+                    'cartao',
+                    Icons.credit_card,
+                    Colors.blue,
+                    tipController,
+                  ),
+                  _buildPaymentOption(
+                    ctx,
+                    appointmentId,
+                    lang.paymentPlan,
+                    'plano',
+                    Icons.calendar_today,
+                    Colors.purple,
+                    tipController,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(
+                    lang.btnCancel,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
-  SimpleDialogOption _buildPaymentOption(
+  Widget _buildPaymentOption(
     BuildContext ctx,
     int id,
     String label,
+    String internalValue,
     IconData icon,
     Color color,
+    TextEditingController tipController,
   ) {
-    return SimpleDialogOption(
-      padding: const EdgeInsets.all(15),
-      child: Row(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(width: 10),
-          Text(label),
-        ],
-      ),
-      onPressed: () {
+    return InkWell(
+      onTap: () {
+        double tipAmount = 0.0;
+        if (tipController.text.isNotEmpty) {
+          tipAmount =
+              double.tryParse(tipController.text.replaceAll(',', '.')) ?? 0.0;
+        }
+
         Navigator.pop(ctx);
-        _updateStatus(id, 'concluido', paymentMethod: label);
+        _updateStatus(
+          id,
+          'concluido',
+          paymentMethod: internalValue,
+          tipAmount: tipAmount,
+        );
       },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 10),
+            Text(label, style: const TextStyle(fontSize: 16)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -400,9 +480,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final currentUser = Supabase.instance.client.auth.currentUser;
-    final String displayName =
-        currentUser?.userMetadata?['full_name'] ?? 'Usuário';
     final lang = AppLocalizations.of(context)!;
+
+    // --- MUDANÇA USUÁRIO DESCONHECIDO ---
+    final String displayName =
+        currentUser?.userMetadata?['full_name'] ?? lang.labelDefaultUser;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -784,7 +866,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
               ],
             ),
-
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

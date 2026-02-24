@@ -623,4 +623,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get labelWhichExpense => 'Qual despesa?';
+
+  @override
+  String get labelTip => 'Gorjeta (Opcional)';
+
+  @override
+  String get dialogPaymentTip => 'Houve gorjeta?';
+
+  @override
+  String get excelColTip => 'Gorjeta';
+
+  @override
+  String msgGoogleReactivated(String services, String total) {
+    return 'Reativado - Serviços: $services\nTotal: $total';
+  }
 }

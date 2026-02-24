@@ -221,5 +221,19 @@
     "expenseCatFood": "Alimentación",
     "expenseCatRent": "Alquiler",
     "expenseCatOthers": "Otros",
-    "labelWhichExpense": "¿Qué gasto?"
+    "labelWhichExpense": "¿Qué gasto?",
+    "labelTip": "Propina (Opcional)",
+    "dialogPaymentTip": "¿Hubo propina?",
+    "excelColTip": "Propina",
+    "msgGoogleReactivated": "Reactivado - Servicios: {services}\nTotal: {total}",
+    "@msgGoogleReactivated": {
+      "placeholders": {
+        "services": {
+          "type": "String"
+        },
+        "total": {
+          "type": "String"
+        }
+      }
+    }
 }

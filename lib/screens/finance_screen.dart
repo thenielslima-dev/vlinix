@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // Para kIsWeb
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
@@ -9,7 +9,7 @@ import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/widgets/user_profile_menu.dart';
 import 'package:vlinix/screens/add_expense_screen.dart';
-import 'package:universal_html/html.dart' as html; // <--- ADICIONADO PARA WEB
+import 'package:universal_html/html.dart' as html;
 
 class FinanceScreen extends StatefulWidget {
   const FinanceScreen({super.key});
@@ -21,12 +21,10 @@ class FinanceScreen extends StatefulWidget {
 class _FinanceScreenState extends State<FinanceScreen> {
   bool _isLoading = true;
 
-  // Totais
   double _totalRevenue = 0.0;
   double _totalExpenses = 0.0;
   double _netBalance = 0.0;
 
-  // Lista unificada
   List<Map<String, dynamic>> _records = [];
 
   DateTime _selectedDate = DateTime.now();
@@ -85,7 +83,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
     });
   }
 
-  // --- ATUALIZAR STATUS NO FINANCEIRO (RECEITAS) ---
   Future<void> _updateAppointmentStatus(
     int id,
     String newStatus, {
@@ -137,7 +134,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
     }
   }
 
-  // --- EXCLUIR DESPESA ---
   Future<void> _deleteExpense(int id) async {
     final lang = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
@@ -189,7 +185,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
     }
   }
 
-  // --- DIÁLOGO DE PAGAMENTO ---
   void _showPaymentDialog(int appointmentId) {
     final lang = AppLocalizations.of(context)!;
     showDialog(
@@ -252,6 +247,27 @@ class _FinanceScreenState extends State<FinanceScreen> {
     );
   }
 
+  String _translateCategory(String categoryKey, AppLocalizations lang) {
+    switch (categoryKey) {
+      case 'water':
+        return lang.expenseCatWater;
+      case 'energy':
+        return lang.expenseCatEnergy;
+      case 'gas':
+        return lang.expenseCatGas;
+      case 'products':
+        return lang.expenseCatProducts;
+      case 'food':
+        return lang.expenseCatFood;
+      case 'rent':
+        return lang.expenseCatRent;
+      case 'others':
+        return lang.expenseCatOthers;
+      default:
+        return categoryKey;
+    }
+  }
+
   Future<void> _loadFinanceData() async {
     setState(() => _isLoading = true);
 
@@ -279,6 +295,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
             start_time, 
             status,
             payment_method, 
+            tip_amount, 
             clients(full_name), 
             appointment_services(price, services(name)), 
             services(name, price) 
@@ -319,7 +336,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
       final revenueData = await queryRevenue;
 
-      // 2. BUSCAR DESPESAS
       List<dynamic> expensesData = [];
       if (_selectedFilter == 'todos') {
         expensesData = await supabase
@@ -329,7 +345,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
             .lte('date', endOfMonth);
       }
 
-      // 3. PROCESSAMENTO
       double revenueTotal = 0.0;
       double expenseTotal = 0.0;
       final List<Map<String, dynamic>> combinedList = [];
@@ -354,7 +369,16 @@ class _FinanceScreenState extends State<FinanceScreen> {
           serviceNames = s['name'];
         }
 
-        revenueTotal += appointmentTotal;
+        double tipAmount = 0.0;
+        if (item['tip_amount'] != null) {
+          tipAmount = (item['tip_amount'] is int)
+              ? (item['tip_amount'] as int).toDouble()
+              : (item['tip_amount'] as double);
+        }
+
+        final finalTotalValue = appointmentTotal + tipAmount;
+        revenueTotal += finalTotalValue;
+
         final isPending =
             item['status'] == 'pendente' || item['status'] == 'em_andamento';
 
@@ -363,10 +387,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
           'type': isPending ? 'pending' : 'income',
           'date': item['start_time'],
           'title': serviceNames,
+
+          // --- MUDANÇA CLIENTE DESCONHECIDO AQUI ---
           'subtitle': item['clients'] != null
               ? item['clients']['full_name']
-              : 'Cliente?',
-          'value': appointmentTotal,
+              : null, // Deixamos null para tratar na visualização
+
+          'value': finalTotalValue,
+          'tipAmount': tipAmount,
           'isPending': isPending,
           'rawMethod': item['payment_method'],
         });
@@ -413,9 +441,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
     }
   }
 
-  // --- FUNÇÃO DE EXPORTAR PARA EXCEL (100% TRADUZIDA E ESTILIZADA) ---
-  // --- FUNÇÃO DE EXPORTAR PARA EXCEL (100% TRADUZIDA E ESTILIZADA E SEM ERROS) ---
-  // --- FUNÇÃO DE EXPORTAR PARA EXCEL (100% TRADUZIDA, ESTILIZADA E COMPATÍVEL COM WEB/MOBILE) ---
   Future<void> _exportToExcel() async {
     final lang = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).languageCode;
@@ -434,7 +459,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
       void populateSheet(String sheetName, String filterType) {
         Sheet sheet = excel[sheetName];
 
-        // --- ESTILO DO CABEÇALHO ---
         CellStyle headerStyle = CellStyle(
           bold: true,
           fontColorHex: ExcelColor.white,
@@ -448,10 +472,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
           lang.excelColDesc,
           lang.excelColClient,
           lang.excelColMethod,
+          '${lang.excelColTip} ($currencySymbol)',
           '${lang.excelColValue} ($currencySymbol)',
         ];
 
-        // Aplicando as colunas do Cabeçalho com o Estilo
         for (var i = 0; i < headers.length; i++) {
           var cell = sheet.cell(
             CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
@@ -460,7 +484,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
           cell.cellStyle = headerStyle;
         }
 
-        // Filtro de Dados
         List<Map<String, dynamic>> filteredList = [];
 
         if (filterType == 'Todos') {
@@ -502,8 +525,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
         }
 
         double totalSheetValue = 0.0;
+        double totalTips = 0.0;
 
-        // Popula as linhas a partir do índice 1 (abaixo do cabeçalho)
         for (int row = 0; row < filteredList.length; row++) {
           var item = filteredList[row];
           final isExpense = item['type'] == 'expense';
@@ -516,12 +539,18 @@ class _FinanceScreenState extends State<FinanceScreen> {
           String tipo = isExpense
               ? lang.excelTypeExpense
               : (isPending ? lang.excelTypePending : lang.excelTypeIncome);
+
           String titulo = isExpense
-              ? (item['titleRaw'] ?? lang.labelExpenseTitle)
+              ? _translateCategory(
+                  (item['titleRaw'] ?? lang.labelExpenseTitle),
+                  lang,
+                )
               : item['title'];
+
+          // --- MUDANÇA CLIENTE DESCONHECIDO NO EXCEL AQUI ---
           String subtitulo = isExpense
               ? lang.labelExpenseSubtitle
-              : item['subtitle'];
+              : (item['subtitle'] ?? lang.labelUnknownClient);
 
           String metodo = '';
           if (isExpense) {
@@ -529,7 +558,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
           } else if (isPending) {
             metodo = lang.excelStatusWaiting;
           } else {
-            // Traduz a forma de pagamento do banco para o Excel
             final rawMethod = item['rawMethod'];
             if (rawMethod == null) {
               metodo = lang.labelWithoutRegistration;
@@ -560,8 +588,11 @@ class _FinanceScreenState extends State<FinanceScreen> {
           }
 
           double valor = item['value'];
+          double tipAmount = item['tipAmount'] ?? 0.0;
           double displayValue = isExpense ? -valor : valor;
+
           totalSheetValue += displayValue;
+          totalTips += tipAmount;
 
           sheet.appendRow([
             TextCellValue(data),
@@ -569,12 +600,13 @@ class _FinanceScreenState extends State<FinanceScreen> {
             TextCellValue(titulo),
             TextCellValue(subtitulo),
             TextCellValue(metodo),
+            isExpense ? TextCellValue('-') : DoubleCellValue(tipAmount),
             DoubleCellValue(displayValue),
           ]);
         }
 
-        // Pula uma linha
         sheet.appendRow([
+          TextCellValue(''),
           TextCellValue(''),
           TextCellValue(''),
           TextCellValue(''),
@@ -583,7 +615,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
           TextCellValue(''),
         ]);
 
-        // --- ESTILO E ADIÇÃO DA LINHA TOTALIZADORA ---
         CellStyle totalStyle = CellStyle(
           bold: true,
           fontColorHex: totalSheetValue >= 0
@@ -599,34 +630,46 @@ class _FinanceScreenState extends State<FinanceScreen> {
         totalLabelCell.value = TextCellValue(lang.excelTotal);
         totalLabelCell.cellStyle = CellStyle(bold: true);
 
+        if (filterType != 'Despesas') {
+          var totalTipCell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: totalRowIndex),
+          );
+          totalTipCell.value = DoubleCellValue(totalTips);
+          totalTipCell.cellStyle = CellStyle(
+            bold: true,
+            fontColorHex: ExcelColor.green,
+          );
+        }
+
         var totalValueCell = sheet.cell(
-          CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: totalRowIndex),
+          CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: totalRowIndex),
         );
         totalValueCell.value = DoubleCellValue(totalSheetValue);
         totalValueCell.cellStyle = totalStyle;
       }
 
-      // Nomes das abas traduzidos
       populateSheet(lang.excelSheetAll, 'Todos');
       populateSheet(lang.excelSheetReceivable, 'A Receber');
       populateSheet(lang.excelSheetCash, 'Dinheiro');
       populateSheet(lang.excelSheetCard, 'Cartão');
       populateSheet(lang.excelSheetExpenses, 'Despesas');
 
-      // --- NOVA LÓGICA: APAGA A SHEET1 DEPOIS DE CRIAR AS OUTRAS ---
       if (excel.tables.keys.contains('Sheet1')) {
         excel.delete('Sheet1');
       }
-
-      // Define a aba "Todos" como a aba principal que o Excel vai abrir primeiro
       excel.setDefaultSheet(lang.excelSheetAll);
 
-      // --- VERIFICAÇÃO DE PLATAFORMA ---
+      // --- MUDANÇA NOME DO ARQUIVO AQUI ---
+      String cleanTitle = lang.financeTitle.replaceAll(
+        ' ',
+        '_',
+      ); // Para não dar problema no nome do arquivo
+      String monthStr = DateFormat('MM_yyyy').format(_selectedDate);
+      String filename = 'VLINIX_${cleanTitle}_$monthStr.xlsx';
+
       if (!kIsWeb) {
-        // MOBILE LÓGICA
         Directory directory = await getApplicationDocumentsDirectory();
-        String monthStr = DateFormat('MM_yyyy').format(_selectedDate);
-        String filePath = '${directory.path}/VLINIX_Financeiro_$monthStr.xlsx';
+        String filePath = '${directory.path}/$filename';
 
         File file = File(filePath);
         final bytes = excel.encode();
@@ -635,7 +678,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(lang.msgExcelSaved(monthStr)),
+                content: Text(lang.msgExcelSaved(filename)), // Traduzido
                 backgroundColor: AppColors.success,
                 duration: const Duration(seconds: 4),
               ),
@@ -643,20 +686,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
           }
         }
       } else {
-        // WEB LÓGICA
         final bytes = excel.encode();
         if (bytes != null) {
-          String monthStr = DateFormat('MM_yyyy').format(_selectedDate);
-          String filename = 'VLINIX_Financeiro_$monthStr.xlsx';
-
-          // Cria um arquivo "virtual" (Blob) na memória do navegador
           final blob = html.Blob(
             [bytes],
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           );
           final url = html.Url.createObjectUrlFromBlob(blob);
 
-          // Cria um link invisível, clica nele para baixar e depois destrói o link
           html.AnchorElement(href: url)
             ..setAttribute('download', filename)
             ..click();
@@ -666,9 +703,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  lang.msgExcelDownloadStarted(filename),
-                ), // Tradução aplicada aqui!
+                content: Text(lang.msgExcelDownloadStarted(filename)),
                 backgroundColor: AppColors.success,
                 duration: const Duration(seconds: 4),
               ),
@@ -956,8 +991,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       left: 16,
                       right: 16,
                       top: 8,
-                      bottom:
-                          85, // <--- Este espaço permite rolar a lista pra cima do botão!
+                      bottom: 85,
                     ),
                     itemCount: _records.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
@@ -967,19 +1001,24 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       final isPending = item['type'] == 'pending';
                       final valColor = _getTypeColor(item['type']);
                       final int? itemId = item['id'];
+                      final double tipAmount = item['tipAmount'] ?? 0.0;
 
                       String displayTitle = '';
                       String displaySubtitle = '';
                       String displayMethod = '';
 
                       if (isExpense) {
-                        displayTitle =
-                            item['titleRaw'] ?? lang.labelExpenseTitle;
+                        displayTitle = _translateCategory(
+                          (item['titleRaw'] ?? lang.labelExpenseTitle),
+                          lang,
+                        );
                         displaySubtitle = lang.labelExpenseSubtitle;
                         displayMethod = 'N/A';
                       } else {
                         displayTitle = item['title'];
-                        displaySubtitle = item['subtitle'];
+                        // --- MUDANÇA CLIENTE DESCONHECIDO NA LISTA AQUI ---
+                        displaySubtitle =
+                            item['subtitle'] ?? lang.labelUnknownClient;
 
                         if (isPending) {
                           displayMethod = lang.statusAwaitingPayment;
@@ -1091,12 +1130,31 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                   ),
                                 ),
                                 if (displayMethod != 'N/A')
-                                  Text(
-                                    displayMethod,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.grey[500],
-                                    ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (tipAmount > 0)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 6.0,
+                                          ),
+                                          child: Text(
+                                            '+ ${_formatCurrency(tipAmount)} 💰',
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.orange,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      Text(
+                                        displayMethod,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey[500],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                               ],
                             ),

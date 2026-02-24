@@ -1287,6 +1287,30 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Qual despesa?'**
   String get labelWhichExpense;
+
+  /// No description provided for @labelTip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gorjeta (Opcional)'**
+  String get labelTip;
+
+  /// No description provided for @dialogPaymentTip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Houve gorjeta?'**
+  String get dialogPaymentTip;
+
+  /// No description provided for @excelColTip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gorjeta'**
+  String get excelColTip;
+
+  /// No description provided for @msgGoogleReactivated.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reativado - Serviços: {services}\nTotal: {total}'**
+  String msgGoogleReactivated(String services, String total);
 }
 
 class _AppLocalizationsDelegate
