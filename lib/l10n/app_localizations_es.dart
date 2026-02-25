@@ -646,4 +646,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get msgErrorOpenMap => 'No se pudo abrir el mapa.';
+
+  @override
+  String get btnResetFilter => 'Limpiar';
+
+  @override
+  String get tooltipResetDate => 'Mostrar mes entero';
 }

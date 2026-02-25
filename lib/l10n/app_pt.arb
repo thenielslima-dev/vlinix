@@ -237,5 +237,7 @@
       }
     },
     "btnOpenMap": "Ver no Mapa",
-    "msgErrorOpenMap": "Não foi possível abrir o mapa."
+    "msgErrorOpenMap": "Não foi possível abrir o mapa.",
+    "btnResetFilter": "Limpar",
+    "tooltipResetDate": "Mostrar mês inteiro"
 }

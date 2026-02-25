@@ -27,7 +27,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
   List<Map<String, dynamic>> _records = [];
 
-  DateTime _selectedDate = DateTime.now();
+  // --- MUDANÇA: AGORA GUARDAMOS O MÊS E O DIA SEPARADAMENTE ---
+  DateTime _selectedMonth = DateTime.now();
+  DateTime? _selectedSpecificDay;
   String _selectedFilter = 'todos';
 
   @override
@@ -38,22 +40,23 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
   void _changeMonth(int monthsToAdd) {
     setState(() {
-      _selectedDate = DateTime(
-        _selectedDate.year,
-        _selectedDate.month + monthsToAdd,
+      _selectedMonth = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month + monthsToAdd,
         1,
       );
+      _selectedSpecificDay = null; // Limpa o dia específico ao trocar de mês
       _loadFinanceData();
     });
   }
 
-  Future<void> _pickMonthYear() async {
+  // --- MUDANÇA: O CALENDÁRIO AGORA DEIXA ESCOLHER O DIA ---
+  Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate: _selectedSpecificDay ?? _selectedMonth,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
-      initialDatePickerMode: DatePickerMode.year,
       builder: (context, child) {
         return Theme(
           data: ThemeData.light().copyWith(
@@ -70,7 +73,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
     if (picked != null) {
       setState(() {
-        _selectedDate = picked;
+        _selectedMonth = DateTime(picked.year, picked.month, 1);
+        _selectedSpecificDay = picked; // Salva o dia exato
         _loadFinanceData();
       });
     }
@@ -271,19 +275,41 @@ class _FinanceScreenState extends State<FinanceScreen> {
   Future<void> _loadFinanceData() async {
     setState(() => _isLoading = true);
 
-    final startOfMonth = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      1,
-    ).toUtc().toIso8601String();
-    final endOfMonth = DateTime(
-      _selectedDate.year,
-      _selectedDate.month + 1,
-      0,
-      23,
-      59,
-      59,
-    ).toUtc().toIso8601String();
+    // --- MUDANÇA: DEFINE SE VAI BUSCAR UM DIA SÓ OU O MÊS INTEIRO ---
+    String startTimeStr;
+    String endTimeStr;
+
+    if (_selectedSpecificDay != null) {
+      // Busca apenas do dia selecionado
+      startTimeStr = DateTime(
+        _selectedSpecificDay!.year,
+        _selectedSpecificDay!.month,
+        _selectedSpecificDay!.day,
+      ).toUtc().toIso8601String();
+      endTimeStr = DateTime(
+        _selectedSpecificDay!.year,
+        _selectedSpecificDay!.month,
+        _selectedSpecificDay!.day,
+        23,
+        59,
+        59,
+      ).toUtc().toIso8601String();
+    } else {
+      // Busca do mês inteiro
+      startTimeStr = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month,
+        1,
+      ).toUtc().toIso8601String();
+      endTimeStr = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month + 1,
+        0,
+        23,
+        59,
+        59,
+      ).toUtc().toIso8601String();
+    }
 
     final supabase = Supabase.instance.client;
 
@@ -300,8 +326,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
             appointment_services(price, services(name)), 
             services(name, price) 
             ''')
-          .gte('start_time', startOfMonth)
-          .lte('start_time', endOfMonth);
+          .gte('start_time', startTimeStr)
+          .lte('start_time', endTimeStr);
 
       if (_selectedFilter == 'pendentes') {
         queryRevenue = queryRevenue.inFilter('status', const [
@@ -341,8 +367,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
         expensesData = await supabase
             .from('expenses')
             .select()
-            .gte('date', startOfMonth)
-            .lte('date', endOfMonth);
+            .gte('date', startTimeStr)
+            .lte('date', endTimeStr);
       }
 
       double revenueTotal = 0.0;
@@ -387,12 +413,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
           'type': isPending ? 'pending' : 'income',
           'date': item['start_time'],
           'title': serviceNames,
-
-          // --- MUDANÇA CLIENTE DESCONHECIDO AQUI ---
           'subtitle': item['clients'] != null
               ? item['clients']['full_name']
-              : null, // Deixamos null para tratar na visualização
-
+              : null,
           'value': finalTotalValue,
           'tipAmount': tipAmount,
           'isPending': isPending,
@@ -547,7 +570,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 )
               : item['title'];
 
-          // --- MUDANÇA CLIENTE DESCONHECIDO NO EXCEL AQUI ---
           String subtitulo = isExpense
               ? lang.labelExpenseSubtitle
               : (item['subtitle'] ?? lang.labelUnknownClient);
@@ -659,13 +681,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
       }
       excel.setDefaultSheet(lang.excelSheetAll);
 
-      // --- MUDANÇA NOME DO ARQUIVO AQUI ---
-      String cleanTitle = lang.financeTitle.replaceAll(
-        ' ',
-        '_',
-      ); // Para não dar problema no nome do arquivo
-      String monthStr = DateFormat('MM_yyyy').format(_selectedDate);
-      String filename = 'VLINIX_${cleanTitle}_$monthStr.xlsx';
+      String cleanTitle = lang.financeTitle.replaceAll(' ', '_');
+
+      // --- MUDANÇA: O NOME DO ARQUIVO MOSTRA SE É O MÊS OU UM DIA ESPECÍFICO ---
+      String dateStr = _selectedSpecificDay != null
+          ? DateFormat('dd_MM_yyyy').format(_selectedSpecificDay!)
+          : DateFormat('MM_yyyy').format(_selectedMonth);
+
+      String filename = 'VLINIX_${cleanTitle}_$dateStr.xlsx';
 
       if (!kIsWeb) {
         Directory directory = await getApplicationDocumentsDirectory();
@@ -678,7 +701,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(lang.msgExcelSaved(filename)), // Traduzido
+                content: Text(lang.msgExcelSaved(filename)),
                 backgroundColor: AppColors.success,
                 duration: const Duration(seconds: 4),
               ),
@@ -760,6 +783,20 @@ class _FinanceScreenState extends State<FinanceScreen> {
     final lang = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).languageCode;
 
+    // Formatação do título do botão central de data
+    String displayDateText;
+    if (_selectedSpecificDay != null) {
+      displayDateText = DateFormat(
+        'dd/MM/yyyy',
+        locale,
+      ).format(_selectedSpecificDay!);
+    } else {
+      displayDateText = DateFormat(
+        'MMMM yyyy',
+        locale,
+      ).format(_selectedMonth).toUpperCase();
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -812,7 +849,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                   onPressed: () => _changeMonth(-1),
                 ),
                 InkWell(
-                  onTap: _pickMonthYear,
+                  onTap: _pickDate, // Usa o novo seletor de dias
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -820,7 +857,11 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(
+                        color: _selectedSpecificDay != null
+                            ? AppColors.accent
+                            : Colors.grey.shade300,
+                      ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -832,10 +873,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          DateFormat(
-                            'MMMM yyyy',
-                            locale,
-                          ).format(_selectedDate).toUpperCase(),
+                          displayDateText,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -847,13 +885,34 @@ class _FinanceScreenState extends State<FinanceScreen> {
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.chevron_right,
-                    color: AppColors.primary,
+
+                // --- MUDANÇA: BOTÃO DE LIMPAR CASO UM DIA ESTEJA SELECIONADO ---
+                if (_selectedSpecificDay != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                      tooltip: lang.tooltipResetDate,
+                      onPressed: () {
+                        setState(() {
+                          _selectedSpecificDay = null;
+                          _loadFinanceData();
+                        });
+                      },
+                    ),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.primary,
+                    ),
+                    onPressed: () => _changeMonth(1),
                   ),
-                  onPressed: () => _changeMonth(1),
-                ),
               ],
             ),
           ),
@@ -1016,7 +1075,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
                         displayMethod = 'N/A';
                       } else {
                         displayTitle = item['title'];
-                        // --- MUDANÇA CLIENTE DESCONHECIDO NA LISTA AQUI ---
                         displaySubtitle =
                             item['subtitle'] ?? lang.labelUnknownClient;
 

@@ -1323,6 +1323,18 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Não foi possível abrir o mapa.'**
   String get msgErrorOpenMap;
+
+  /// No description provided for @btnResetFilter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limpar'**
+  String get btnResetFilter;
+
+  /// No description provided for @tooltipResetDate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostrar mês inteiro'**
+  String get tooltipResetDate;
 }
 
 class _AppLocalizationsDelegate

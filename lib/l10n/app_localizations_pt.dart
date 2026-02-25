@@ -643,4 +643,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get msgErrorOpenMap => 'Não foi possível abrir o mapa.';
+
+  @override
+  String get btnResetFilter => 'Limpar';
+
+  @override
+  String get tooltipResetDate => 'Mostrar mês inteiro';
 }
