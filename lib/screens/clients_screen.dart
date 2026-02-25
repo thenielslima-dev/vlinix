@@ -41,16 +41,14 @@ class _ClientsScreenState extends State<ClientsScreen> {
   // --- NOVA FUNÇÃO PARA ABRIR O MAPA ---
   Future<void> _openMap(String address) async {
     final lang = AppLocalizations.of(context)!;
-    // Transforma o endereço em uma URL válida de busca no mapa
+
+    // URL universal oficial do Google Maps (funciona em Android, iOS e Web)
     final Uri url = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
     );
 
     if (await canLaunchUrl(url)) {
-      await launchUrl(
-        url,
-        mode: LaunchMode.externalApplication,
-      ); // Abre no app de mapas nativo se existir
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

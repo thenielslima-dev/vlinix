@@ -89,6 +89,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // --- NOVA FUNÇÃO PARA ABRIR O MAPA ---
   Future<void> _openMap(String address) async {
     final lang = AppLocalizations.of(context)!;
+
+    // URL universal oficial do Google Maps (funciona em Android, iOS e Web)
     final Uri url = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
     );
