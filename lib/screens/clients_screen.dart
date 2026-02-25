@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart'; // <--- IMPORT DO MAPA
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/widgets/user_profile_menu.dart';
@@ -17,14 +17,14 @@ class _ClientsScreenState extends State<ClientsScreen> {
   final _searchController = TextEditingController();
   String _searchText = '';
 
-  final _clientsStream = Supabase.instance.client
-      .from('clients')
-      .stream(primaryKey: ['id'])
-      .order('full_name');
+  // --- MUDANÇA: TROCAMOS O STREAM POR UMA LISTA SIMPLES ---
+  List<Map<String, dynamic>> _clients = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _loadClients(); // Carrega os clientes ao abrir a tela
     _searchController.addListener(() {
       setState(() {
         _searchText = _searchController.text.toLowerCase();
@@ -38,11 +38,29 @@ class _ClientsScreenState extends State<ClientsScreen> {
     super.dispose();
   }
 
-  // --- NOVA FUNÇÃO PARA ABRIR O MAPA ---
+  // --- NOVA FUNÇÃO QUE BUSCA OS DADOS (IGUAL A TELA HOME) ---
+  Future<void> _loadClients() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await Supabase.instance.client
+          .from('clients')
+          .select()
+          .order('full_name');
+
+      if (mounted) {
+        setState(() {
+          _clients = List<Map<String, dynamic>>.from(data);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao carregar clientes: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _openMap(String address) async {
     final lang = AppLocalizations.of(context)!;
-
-    // URL universal oficial do Google Maps (funciona em Android, iOS e Web)
     final Uri url = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
     );
@@ -97,6 +115,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
           ),
         );
       }
+      _loadClients(); // Recarrega a lista após deletar
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -109,18 +128,29 @@ class _ClientsScreenState extends State<ClientsScreen> {
     }
   }
 
-  void _navigateToAddEdit({Map<String, dynamic>? client}) {
-    Navigator.push(
+  void _navigateToAddEdit({Map<String, dynamic>? client}) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AddClientScreen(clientToEdit: client),
       ),
     );
+    _loadClients(); // Recarrega a lista caso o usuário tenha salvo um novo cliente
   }
 
   @override
   Widget build(BuildContext context) {
     final lang = AppLocalizations.of(context)!;
+
+    // Filtra a lista localmente baseado no que o usuário digitou
+    final filteredClients = _clients.where((client) {
+      final name = (client['full_name'] ?? '').toString().toLowerCase();
+      final phone = (client['phone'] ?? '').toString().toLowerCase();
+      final email = (client['email'] ?? '').toString().toLowerCase();
+      return name.contains(_searchText) ||
+          phone.contains(_searchText) ||
+          email.contains(_searchText);
+    }).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -172,201 +202,197 @@ class _ClientsScreenState extends State<ClientsScreen> {
             ),
           ),
           Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: _clientsStream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      lang.msgErrorGeneric(snapshot.error.toString()),
-                    ),
-                  );
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final allClients = snapshot.data!;
-                final clients = allClients.where((client) {
-                  final name = (client['full_name'] ?? '')
-                      .toString()
-                      .toLowerCase();
-                  final phone = (client['phone'] ?? '')
-                      .toString()
-                      .toLowerCase();
-                  final email = (client['email'] ?? '')
-                      .toString()
-                      .toLowerCase();
-                  return name.contains(_searchText) ||
-                      phone.contains(_searchText) ||
-                      email.contains(_searchText);
-                }).toList();
-
-                if (clients.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.person_off,
-                          size: 60,
-                          color: Colors.grey[300],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          lang.msgNoClients,
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.only(top: 8, bottom: 80),
-                  itemCount: clients.length,
-                  itemBuilder: (context, index) {
-                    final client = clients[index];
-                    final firstLetter = client['full_name']
-                        .toString()
-                        .substring(0, 1)
-                        .toUpperCase();
-
-                    final bool hasAddress =
-                        client['address'] != null &&
-                        client['address'].toString().trim().isNotEmpty;
-
-                    return Card(
-                      elevation: 0,
-                      color: Colors.white,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        leading: CircleAvatar(
-                          backgroundColor: AppColors.primary.withValues(
-                            alpha: 0.1,
-                          ),
-                          child: Text(
-                            firstLetter,
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        title: Text(
-                          client['full_name'],
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (client['phone'] != null &&
-                                client['phone'] != '')
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.phone,
-                                    size: 12,
-                                    color: Colors.grey,
+            // --- MUDANÇA: USAMOS RefreshIndicator AGORA ---
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _loadClients,
+                    child: filteredClients.isEmpty
+                        ? ListView(
+                            // ListView necessário para o RefreshIndicator funcionar mesmo vazio
+                            children: [
+                              SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.5,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.person_off,
+                                        size: 60,
+                                        color: Colors.grey[300],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        lang.msgNoClients,
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    client['phone'],
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            if (hasAddress)
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.location_on,
-                                    size: 12,
-                                    color: Colors.grey,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      client['address'],
-                                      style: const TextStyle(fontSize: 12),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                        trailing: PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert),
-                          onSelected: (value) {
-                            if (value == 'edit') {
-                              _navigateToAddEdit(client: client);
-                            } else if (value == 'delete') {
-                              _deleteClient(client['id']);
-                            } else if (value == 'map') {
-                              _openMap(client['address']);
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              value: 'edit',
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.edit,
-                                    color: AppColors.primary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(lang.btnEdit),
-                                ],
-                              ),
-                            ),
-
-                            // --- NOVA OPÇÃO DE MAPA NO MENU DE CLIENTES ---
-                            if (hasAddress)
-                              PopupMenuItem(
-                                value: 'map',
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.map, color: Colors.blue),
-                                    const SizedBox(width: 8),
-                                    Text(lang.btnOpenMap),
-                                  ],
                                 ),
                               ),
+                            ],
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.only(top: 8, bottom: 80),
+                            physics:
+                                const AlwaysScrollableScrollPhysics(), // Permite rolar para atualizar
+                            itemCount: filteredClients.length,
+                            itemBuilder: (context, index) {
+                              final client = filteredClients[index];
+                              final firstLetter = client['full_name']
+                                  .toString()
+                                  .substring(0, 1)
+                                  .toUpperCase();
 
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.delete,
-                                    color: AppColors.error,
+                              final bool hasAddress =
+                                  client['address'] != null &&
+                                  client['address']
+                                      .toString()
+                                      .trim()
+                                      .isNotEmpty;
+
+                              return Card(
+                                elevation: 0,
+                                color: Colors.white,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 6,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(color: Colors.grey.shade200),
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(lang.btnDelete),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                                  leading: CircleAvatar(
+                                    backgroundColor: AppColors.primary
+                                        .withValues(alpha: 0.1),
+                                    child: Text(
+                                      firstLetter,
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    client['full_name'],
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (client['phone'] != null &&
+                                          client['phone'] != '')
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.phone,
+                                              size: 12,
+                                              color: Colors.grey,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              client['phone'],
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      if (hasAddress)
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.location_on,
+                                              size: 12,
+                                              color: Colors.grey,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Expanded(
+                                              child: Text(
+                                                client['address'],
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                    ],
+                                  ),
+                                  trailing: PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert),
+                                    onSelected: (value) {
+                                      if (value == 'edit') {
+                                        _navigateToAddEdit(client: client);
+                                      } else if (value == 'delete') {
+                                        _deleteClient(client['id']);
+                                      } else if (value == 'map') {
+                                        _openMap(client['address']);
+                                      }
+                                    },
+                                    itemBuilder: (context) => [
+                                      PopupMenuItem(
+                                        value: 'edit',
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.edit,
+                                              color: AppColors.primary,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(lang.btnEdit),
+                                          ],
+                                        ),
+                                      ),
+
+                                      if (hasAddress)
+                                        PopupMenuItem(
+                                          value: 'map',
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.map,
+                                                color: Colors.blue,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(lang.btnOpenMap),
+                                            ],
+                                          ),
+                                        ),
+
+                                      PopupMenuItem(
+                                        value: 'delete',
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.delete,
+                                              color: AppColors.error,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(lang.btnDelete),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
           ),
         ],
       ),
