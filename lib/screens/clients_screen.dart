@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart'; // <--- IMPORT DO MAPA
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/widgets/user_profile_menu.dart';
@@ -35,6 +36,31 @@ class _ClientsScreenState extends State<ClientsScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  // --- NOVA FUNÇÃO PARA ABRIR O MAPA ---
+  Future<void> _openMap(String address) async {
+    final lang = AppLocalizations.of(context)!;
+    // Transforma o endereço em uma URL válida de busca no mapa
+    final Uri url = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
+    );
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      ); // Abre no app de mapas nativo se existir
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(lang.msgErrorOpenMap),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _deleteClient(int id) async {
@@ -152,7 +178,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
               stream: _clientsStream,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  // Substituído texto chumbado pela chave de erro
                   return Center(
                     child: Text(
                       lang.msgErrorGeneric(snapshot.error.toString()),
@@ -209,6 +234,10 @@ class _ClientsScreenState extends State<ClientsScreen> {
                         .substring(0, 1)
                         .toUpperCase();
 
+                    final bool hasAddress =
+                        client['address'] != null &&
+                        client['address'].toString().trim().isNotEmpty;
+
                     return Card(
                       elevation: 0,
                       color: Colors.white,
@@ -260,8 +289,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                   ),
                                 ],
                               ),
-                            if (client['address'] != null &&
-                                client['address'] != '')
+                            if (hasAddress)
                               Row(
                                 children: [
                                   const Icon(
@@ -288,6 +316,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
                               _navigateToAddEdit(client: client);
                             } else if (value == 'delete') {
                               _deleteClient(client['id']);
+                            } else if (value == 'map') {
+                              _openMap(client['address']);
                             }
                           },
                           itemBuilder: (context) => [
@@ -304,6 +334,20 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                 ],
                               ),
                             ),
+
+                            // --- NOVA OPÇÃO DE MAPA NO MENU DE CLIENTES ---
+                            if (hasAddress)
+                              PopupMenuItem(
+                                value: 'map',
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.map, color: Colors.blue),
+                                    const SizedBox(width: 8),
+                                    Text(lang.btnOpenMap),
+                                  ],
+                                ),
+                              ),
+
                             PopupMenuItem(
                               value: 'delete',
                               child: Row(

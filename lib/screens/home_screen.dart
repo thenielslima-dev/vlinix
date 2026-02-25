@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart'; // <--- IMPORT DO MAPA
 import 'package:vlinix/main.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
@@ -52,11 +53,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
       const selectQuery = '''
         *,
-        clients(full_name),
+        clients(full_name, address), 
         vehicles(model, category), 
         services(name),
         appointment_services(id, price, completed, services(name))
-      ''';
+      '''; // <-- ADICIONADO address DO CLIENTE AQUI NA BUSCA
 
       final todayData = await supabase
           .from('appointments')
@@ -85,6 +86,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // --- NOVA FUNÇÃO PARA ABRIR O MAPA ---
+  Future<void> _openMap(String address) async {
+    final lang = AppLocalizations.of(context)!;
+    final Uri url = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
+    );
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(lang.msgErrorOpenMap),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   // --- ATUALIZAÇÃO DO STATUS ---
   Future<void> _updateStatus(
     int id,
@@ -94,11 +116,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }) async {
     final supabase = Supabase.instance.client;
     String feedbackMsg = '';
-    // Pegando a localização com segurança antes de operações assíncronas extensas
     final lang = AppLocalizations.of(context)!;
 
     try {
-      // 1. LÓGICA DO GOOGLE CALENDAR
       final currentData = await supabase
           .from('appointments')
           .select(
@@ -110,7 +130,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final String? currentGoogleId = currentData['google_event_id'];
       String? newGoogleEventId;
 
-      // --- MUDANÇA: APAGA DO GOOGLE SE CANCELADO *OU* CONCLUÍDO ---
       if (newStatus == 'cancelado' || newStatus == 'concluido') {
         if (currentGoogleId != null && currentGoogleId.isNotEmpty) {
           await GoogleCalendarService.instance.deleteEvent(currentGoogleId);
@@ -142,7 +161,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
 
-      // 2. ATUALIZAÇÃO NO SUPABASE
       final Map<String, dynamic> updateData = {'status': newStatus};
 
       if (newStatus == 'concluido') {
@@ -158,19 +176,16 @@ class _HomeScreenState extends State<HomeScreen> {
       if (newGoogleEventId != null) {
         updateData['google_event_id'] = newGoogleEventId;
       } else if (newStatus == 'cancelado' || newStatus == 'concluido') {
-        // --- MUDANÇA: REMOVE O ID DO GOOGLE DO BANCO SE FOR CONCLUÍDO TAMBÉM ---
         updateData['google_event_id'] = null;
       }
 
       await supabase.from('appointments').update(updateData).eq('id', id);
       await _loadDashboardData();
 
-      // 3. FEEDBACK VISUAL
       if (mounted) {
         String msg = '';
         Color color = Colors.blue;
 
-        // Se o evento foi removido do Google (seja por cancelamento ou conclusão)
         if ((newStatus == 'cancelado' || newStatus == 'concluido') &&
             currentGoogleId != null &&
             currentGoogleId.isNotEmpty) {
@@ -310,7 +325,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- NOVO DIÁLOGO DE PAGAMENTO COM OPÇÃO DE GORJETA ---
   void _showPaymentDialog(int appointmentId) {
     final lang = AppLocalizations.of(context)!;
     final currencySymbol = lang.localeName == 'pt' ? 'R\$' : '\$';
@@ -361,10 +375,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
-
                   const Divider(),
                   const SizedBox(height: 8),
-
                   _buildPaymentOption(
                     ctx,
                     appointmentId,
@@ -471,6 +483,9 @@ class _HomeScreenState extends State<HomeScreen> {
       'clientName': apt['clients'] != null
           ? apt['clients']['full_name']
           : lang.labelUnknownClient,
+      'clientAddress': apt['clients'] != null
+          ? apt['clients']['address']
+          : null, // <--- ADICIONADO PARA O MAPA
       'vehicleInfo': apt['vehicles'] != null
           ? "${apt['vehicles']['model']} - ${apt['vehicles']['category'] ?? lang.labelCategoryNoCategory}"
           : lang.labelUnknownVehicle,
@@ -716,6 +731,9 @@ class _HomeScreenState extends State<HomeScreen> {
         final data = _processAppointmentData(apt);
         final String status = data['status'] ?? 'pendente';
         final bool isCancelled = data['isCancelled'];
+        final bool hasAddress =
+            data['clientAddress'] != null &&
+            data['clientAddress'].toString().trim().isNotEmpty;
 
         IconData actionIcon;
         Color actionColor;
@@ -873,11 +891,20 @@ class _HomeScreenState extends State<HomeScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // --- BOTÃO DE MAPA SEPARADO PARA SERVIÇOS CONCLUÍDOS ---
+                if (data['isCompleted'] && hasAddress)
+                  IconButton(
+                    icon: const Icon(Icons.map, color: Colors.blue, size: 24),
+                    tooltip: lang.btnOpenMap,
+                    onPressed: () => _openMap(data['clientAddress']),
+                  ),
+
                 IconButton(
                   icon: Icon(actionIcon, color: actionColor, size: 28),
                   tooltip: tooltip,
                   onPressed: onPressed,
                 ),
+
                 if (!data['isCompleted'] && !isCancelled)
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, color: Colors.grey),
@@ -906,9 +933,24 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         );
+                      } else if (value == 'map') {
+                        _openMap(data['clientAddress']);
                       }
                     },
                     itemBuilder: (context) => [
+                      // --- OPÇÃO DE MAPA NO MENU DE AGENDAMENTOS PENDENTES ---
+                      if (hasAddress)
+                        PopupMenuItem(
+                          value: 'map',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.map, color: Colors.blue),
+                              const SizedBox(width: 8),
+                              Text(lang.btnOpenMap),
+                            ],
+                          ),
+                        ),
+
                       PopupMenuItem(
                         value: 'cancel',
                         child: Row(

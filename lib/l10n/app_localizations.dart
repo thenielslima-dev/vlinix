@@ -1311,6 +1311,18 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Reativado - Serviços: {services}\nTotal: {total}'**
   String msgGoogleReactivated(String services, String total);
+
+  /// No description provided for @btnOpenMap.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver no Mapa'**
+  String get btnOpenMap;
+
+  /// No description provided for @msgErrorOpenMap.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir o mapa.'**
+  String get msgErrorOpenMap;
 }
 
 class _AppLocalizationsDelegate

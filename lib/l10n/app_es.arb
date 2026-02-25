@@ -235,5 +235,7 @@
           "type": "String"
         }
       }
-    }
+    },
+    "btnOpenMap": "Ver en el Mapa",
+    "msgErrorOpenMap": "No se pudo abrir el mapa."
 }

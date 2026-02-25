@@ -637,4 +637,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String msgGoogleReactivated(String services, String total) {
     return 'Reativado - Serviços: $services\nTotal: $total';
   }
+
+  @override
+  String get btnOpenMap => 'Ver no Mapa';
+
+  @override
+  String get msgErrorOpenMap => 'Não foi possível abrir o mapa.';
 }
