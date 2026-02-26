@@ -642,7 +642,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         Icon(Icons.campaign, color: Colors.orange, size: 28),
                         SizedBox(width: 8),
                         Text(
-                          'Aviso Global (Megafone)',
+                          'Aviso Global',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
