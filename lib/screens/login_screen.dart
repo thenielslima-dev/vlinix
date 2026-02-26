@@ -49,13 +49,13 @@ class _LoginScreenState extends State<LoginScreen> {
             await Supabase.instance.client.auth.signOut();
 
             if (mounted) {
+              final lang = AppLocalizations.of(context)!;
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Sua conta foi suspensa. Entre em contato com o suporte.',
-                  ),
+                SnackBar(
+                  // --- INTERNACIONALIZAÇÃO APLICADA AQUI ---
+                  content: Text(lang.msgAccountSuspended),
                   backgroundColor: Colors.red,
-                  duration: Duration(seconds: 4),
+                  duration: const Duration(seconds: 4),
                 ),
               );
             }
@@ -83,9 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
           } else {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => const MainScreen(),
-              ), // Substitua por sua tela inicial de clientes
+              MaterialPageRoute(builder: (context) => const MainScreen()),
             );
           }
         }
@@ -151,215 +149,244 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // --- MUDANÇA 1: GARANTIR O REDIMENSIONAMENTO COM O TECLADO ---
       resizeToAvoidBottomInset: true,
 
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primary),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.language, color: AppColors.primary),
-            onSelected: (String langCode) {
-              MyApp.setLocale(context, Locale(langCode));
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem(value: 'pt', child: Text('🇧🇷 Português')),
-              const PopupMenuItem(value: 'en', child: Text('🇺🇸 English')),
-              const PopupMenuItem(value: 'es', child: Text('🇪🇸 Español')),
-            ],
-          ),
-          const SizedBox(width: 10),
-        ],
-      ),
-
-      // --- MUDANÇA 2: SafeArea PROTEGE CONTRA AS BORDAS DO CELULAR ---
+      // --- MUDANÇA: REMOVIDA A APPBAR E COLOCADO UM STACK ---
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Center(
-              child: Container(
-                width: isLargeScreen ? 400 : double.infinity,
-                padding: isLargeScreen
-                    ? const EdgeInsets.all(40)
-                    : EdgeInsets.zero,
-                decoration: isLargeScreen
-                    ? BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                        border: Border.all(color: Colors.grey.shade200),
-                      )
-                    : null,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // --- MUDANÇA 3: AMORTECEDOR DE ESPAÇO NO TOPO ---
-                    const SizedBox(height: 40),
+        child: Stack(
+          children: [
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Center(
+                  child: Container(
+                    width: isLargeScreen ? 400 : double.infinity,
+                    padding: isLargeScreen
+                        ? const EdgeInsets.all(40)
+                        : EdgeInsets.zero,
+                    decoration: isLargeScreen
+                        ? BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                            border: Border.all(color: Colors.grey.shade200),
+                          )
+                        : null,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 40),
 
-                    Hero(
-                      tag: 'app_logo',
-                      child: Image.asset(
-                        'assets/images/logo_symbol.png',
-                        height: 150,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.directions_car_filled,
-                            size: 80,
-                            color: AppColors.primary,
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: const TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'V-Linix\n',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              height: 1.4,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'Auto Detailing Solutions',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-
-                    if (!_isLoading) ...[
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: OutlinedButton.icon(
-                          icon: const Icon(
-                            Icons.login,
-                            color: AppColors.primary,
-                          ),
-                          label: Text(lang.btnLoginGoogle),
-                          onPressed: _googleSignIn,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.primary,
-                            side: const BorderSide(color: AppColors.accent),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
+                        Hero(
+                          tag: 'app_logo',
+                          child: Image.asset(
+                            'assets/images/logo_symbol.png',
+                            height: 150,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.directions_car_filled,
+                                size: 80,
+                                color: AppColors.primary,
+                              );
+                            },
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          const Expanded(child: Divider()),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Text(
-                              lang.labelOr,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[400],
-                              ),
-                            ),
-                          ),
-                          const Expanded(child: Divider()),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-
-                    TextField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: lang.labelEmail,
-                        prefixIcon: const Icon(Icons.email_outlined),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: lang.labelPassword,
-                        prefixIcon: const Icon(Icons.lock_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    _isLoading
-                        ? const CircularProgressIndicator(
-                            color: AppColors.accent,
-                          )
-                        : Column(
+                        const SizedBox(height: 10),
+                        RichText(
+                          textAlign: TextAlign.center,
+                          text: const TextSpan(
                             children: [
-                              SizedBox(
-                                width: double.infinity,
-                                height: 50,
-                                child: ElevatedButton(
-                                  onPressed: _signIn,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    lang.btnLogin,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
+                              TextSpan(
+                                text: 'V-Linix\n',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.4,
                                 ),
                               ),
-                              const SizedBox(height: 16),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SignUpScreen(),
-                                    ),
-                                  );
-                                },
-                                child: Text(
-                                  lang.btnCreateAccountNow,
-                                  style: const TextStyle(
-                                    color: AppColors.accent,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              TextSpan(
+                                text: 'Auto Detailing Solutions',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
                           ),
-                  ],
+                        ),
+                        const SizedBox(height: 40),
+
+                        if (!_isLoading) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: OutlinedButton.icon(
+                              icon: const Icon(
+                                Icons.login,
+                                color: AppColors.primary,
+                              ),
+                              label: Text(lang.btnLoginGoogle),
+                              onPressed: _googleSignIn,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                side: const BorderSide(color: AppColors.accent),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              const Expanded(child: Divider()),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                child: Text(
+                                  lang.labelOr,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                              ),
+                              const Expanded(child: Divider()),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+
+                        TextField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            labelText: lang.labelEmail,
+                            prefixIcon: const Icon(Icons.email_outlined),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: lang.labelPassword,
+                            prefixIcon: const Icon(Icons.lock_outline),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        _isLoading
+                            ? const CircularProgressIndicator(
+                                color: AppColors.accent,
+                              )
+                            : Column(
+                                children: [
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 50,
+                                    child: ElevatedButton(
+                                      onPressed: _signIn,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        lang.btnLogin,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const SignUpScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      lang.btnCreateAccountNow,
+                                      style: const TextStyle(
+                                        color: AppColors.accent,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+
+            // --- BOTÃO DE IDIOMA FLUTUANTE (SEM APPBAR) ---
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: PopupMenuButton<String>(
+                  icon: const Icon(Icons.language, color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onSelected: (String langCode) {
+                    MyApp.setLocale(context, Locale(langCode));
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        const PopupMenuItem(
+                          value: 'pt',
+                          child: Text('🇧🇷 Português'),
+                        ),
+                        const PopupMenuItem(
+                          value: 'en',
+                          child: Text('🇺🇸 English'),
+                        ),
+                        const PopupMenuItem(
+                          value: 'es',
+                          child: Text('🇪🇸 Español'),
+                        ),
+                      ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

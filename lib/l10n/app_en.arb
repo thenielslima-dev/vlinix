@@ -239,5 +239,8 @@
     "btnOpenMap": "Open in Map",
     "msgErrorOpenMap": "Could not open the map.",
     "btnResetFilter": "Clear",
-    "tooltipResetDate": "Show entire month"
+    "tooltipResetDate": "Show entire month",
+    "msgAccountSuspended": "Your account has been suspended. Contact support.",
+    "msgAccountSuspendedLive": "Your account has been suspended by the administrator.",
+    "msgImportantNotice": "Important Notice"
 }

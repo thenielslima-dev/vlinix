@@ -648,4 +648,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tooltipResetDate => 'Show entire month';
+
+  @override
+  String get msgAccountSuspended =>
+      'Your account has been suspended. Contact support.';
+
+  @override
+  String get msgAccountSuspendedLive =>
+      'Your account has been suspended by the administrator.';
+
+  @override
+  String get msgImportantNotice => 'Important Notice';
 }

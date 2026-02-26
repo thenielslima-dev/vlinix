@@ -5,6 +5,10 @@ import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/screens/login_screen.dart';
 import 'admin_user_details_screen.dart';
 
+import 'dart:typed_data';
+import 'package:share_plus/share_plus.dart';
+import 'package:excel/excel.dart' hide Border;
+
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
@@ -18,20 +22,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   double _totalPlatformRevenue = 0.0;
   List<Map<String, dynamic>> _usersList = [];
 
-  // --- VARIÁVEIS PARA O FILTRO DE DATA ---
   DateTime? _startDate;
   DateTime? _endDate;
 
-  // --- NOVA VARIÁVEL: CONTROLADOR DA PESQUISA ---
   final _searchController = TextEditingController();
   String _searchQuery = '';
+
+  // --- VARIÁVEIS DO MEGAFONE ---
+  final _announcementController = TextEditingController();
+  bool _isAnnouncementActive = false;
+  bool _isSavingAnnouncement = false;
 
   @override
   void initState() {
     super.initState();
     _loadPlatformData();
+    _loadAnnouncement(); // Carrega o aviso atual
 
-    // Fica escutando a barra de pesquisa para atualizar a lista em tempo real
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
@@ -42,10 +49,181 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _announcementController.dispose();
     super.dispose();
   }
 
-  // --- FUNÇÕES DE FILTRO RÁPIDO DE DATA ---
+  // --- FUNÇÃO: CARREGAR AVISO DO MEGAFONE ---
+  Future<void> _loadAnnouncement() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('global_announcements')
+          .select()
+          .eq('id', 1)
+          .maybeSingle();
+
+      if (data != null && mounted) {
+        setState(() {
+          _announcementController.text = data['message'] ?? '';
+          _isAnnouncementActive = data['is_active'] ?? false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao carregar aviso: $e');
+    }
+  }
+
+  // --- FUNÇÃO: SALVAR AVISO ---
+  // --- FUNÇÃO: SALVAR AVISO ---
+  Future<void> _updateAnnouncement(bool isActive) async {
+    setState(() => _isSavingAnnouncement = true);
+    try {
+      // A CORREÇÃO ESTÁ AQUI: Adicionamos o .select() no final da linha!
+      await Supabase.instance.client
+          .from('global_announcements')
+          .update({
+            'message': _announcementController.text.trim(),
+            'is_active': isActive,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', 1)
+          .select(); // <--- MÁGICA AQUI
+
+      if (mounted) {
+        setState(() {
+          _isAnnouncementActive = isActive;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isActive
+                  ? 'Aviso ATIVADO para todos os clientes!'
+                  : 'Aviso desativado.',
+            ),
+            backgroundColor: isActive ? Colors.green : Colors.grey,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Erro ao atualizar aviso: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erro ao salvar aviso.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingAnnouncement = false);
+    }
+  }
+
+  // --- FUNÇÃO DO EXCEL ---
+  Future<void> _exportAdminReport() async {
+    setState(() => _isLoading = true);
+
+    try {
+      var excel = Excel.createExcel();
+
+      Sheet sheet1 = excel['Resumo Geral'];
+      excel.setDefaultSheet('Resumo Geral');
+
+      if (excel.tables.containsKey('Sheet1')) {
+        excel.delete('Sheet1');
+      }
+
+      sheet1.appendRow([
+        TextCellValue('RELATÓRIO ADMINISTRATIVO - VLINIX'),
+        TextCellValue(''),
+      ]);
+      sheet1.appendRow([
+        TextCellValue('Data de Geração:'),
+        TextCellValue(DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())),
+      ]);
+      sheet1.appendRow([TextCellValue('')]);
+
+      sheet1.appendRow([TextCellValue('Métrica'), TextCellValue('Valor')]);
+      sheet1.appendRow([
+        TextCellValue('Faturamento Total Acumulado'),
+        TextCellValue(_formatCurrency(_totalPlatformRevenue)),
+      ]);
+      sheet1.appendRow([
+        TextCellValue('Total de Usuários Cadastrados'),
+        IntCellValue(_totalUsers),
+      ]);
+
+      sheet1
+          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+          .cellStyle = CellStyle(
+        bold: true,
+      );
+
+      Sheet sheet2 = excel['Lista de Usuários'];
+      sheet2.appendRow([
+        TextCellValue('Nome Completo'),
+        TextCellValue('E-mail'),
+        TextCellValue('Data de Cadastro'),
+        TextCellValue('Qtd. Clientes'),
+        TextCellValue('Faturamento'),
+        TextCellValue('Status'),
+      ]);
+
+      for (var user in _usersList) {
+        final createdAt = user['created_at'] != null
+            ? DateFormat(
+                'dd/MM/yyyy',
+              ).format(DateTime.parse(user['created_at']))
+            : 'N/A';
+
+        sheet2.appendRow([
+          TextCellValue(user['full_name'] ?? 'N/A'),
+          TextCellValue(user['email'] ?? 'N/A'),
+          TextCellValue(createdAt),
+          IntCellValue(user['total_clients'] ?? 0),
+          TextCellValue(_formatCurrency(user['total_revenue'] ?? 0.0)),
+          TextCellValue((user['is_active'] ?? true) ? 'ATIVO' : 'SUSPENSO'),
+        ]);
+      }
+
+      final fileBytes = excel.encode();
+
+      if (fileBytes != null) {
+        final xFile = XFile.fromData(
+          Uint8List.fromList(fileBytes),
+          name: 'Relatorio_Vlinix.xlsx',
+          mimeType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        );
+
+        await Share.shareXFiles([
+          xFile,
+        ], text: 'Relatório Administrativo V-Linix');
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Relatório gerado com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Erro ao exportar Excel: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erro ao gerar planilha. Verifique os logs.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _applyQuickFilter(String type) {
     final now = DateTime.now();
     setState(() {
@@ -206,10 +384,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           .from('profiles')
           .select()
           .order('full_name');
+      final clientsData = await supabase.from('clients').select('user_id');
 
       var query = supabase
           .from('appointments')
-          .select('tip_amount, appointment_services(price), services(price)')
+          .select(
+            'user_id, tip_amount, appointment_services(price), services(price)',
+          )
           .eq('status', 'concluido');
 
       if (_startDate != null && _endDate != null) {
@@ -219,8 +400,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       }
 
       final appointmentsData = await query;
+      Map<String, double> revenuePerUser = {};
 
-      double totalRev = 0.0;
       for (var apt in appointmentsData) {
         double aptTotal = 0.0;
         if (apt['appointment_services'] != null &&
@@ -232,7 +413,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           aptTotal += (apt['services']['price'] ?? 0.0);
         }
         double tip = (apt['tip_amount'] ?? 0.0).toDouble();
-        totalRev += (aptTotal + tip);
+
+        double finalVal = aptTotal + tip;
+
+        String uid = apt['user_id'].toString();
+        revenuePerUser[uid] = (revenuePerUser[uid] ?? 0.0) + finalVal;
+      }
+
+      Map<String, int> clientsPerUser = {};
+      for (var c in clientsData) {
+        String uid = c['user_id'].toString();
+        clientsPerUser[uid] = (clientsPerUser[uid] ?? 0) + 1;
       }
 
       if (mounted) {
@@ -241,12 +432,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             'theniels.lima@gmail.com',
             'daniel.admin@admin.com',
           ];
+
           _usersList = profilesData
               .where((user) => !adminEmails.contains(user['email']))
+              .map((user) {
+                String uid = user['id'].toString();
+                return {
+                  ...user,
+                  'total_revenue': revenuePerUser[uid] ?? 0.0,
+                  'total_clients': clientsPerUser[uid] ?? 0,
+                };
+              })
               .toList();
 
+          double realPlatformRevenue = 0.0;
+          for (var user in _usersList) {
+            realPlatformRevenue += (user['total_revenue'] as double);
+          }
+
           _totalUsers = _usersList.length;
-          _totalPlatformRevenue = totalRev;
+          _totalPlatformRevenue = realPlatformRevenue;
           _isLoading = false;
         });
       }
@@ -280,7 +485,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       dateLabel = startStr == endStr ? startStr : '$startStr até $endStr';
     }
 
-    // --- NOVA LÓGICA: FILTRA A LISTA PARA MOSTRAR NA TELA ---
     final filteredUsers = _usersList.where((user) {
       final name = (user['full_name'] ?? '').toString().toLowerCase();
       final email = (user['email'] ?? '').toString().toLowerCase();
@@ -296,6 +500,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.table_view, color: AppColors.accent),
+            onPressed: _exportAdminReport,
+            tooltip: 'Exportar Relatório Excel',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout, color: AppColors.error),
             onPressed: _logout,
             tooltip: 'Sair',
@@ -307,7 +516,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: CircularProgressIndicator(color: AppColors.accent),
             )
           : RefreshIndicator(
-              onRefresh: _loadPlatformData,
+              onRefresh: () async {
+                await _loadPlatformData();
+                await _loadAnnouncement();
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16.0),
@@ -424,7 +636,119 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // --- NOVA SEÇÃO: PESQUISA E TÍTULO ---
+                    // --- NOVA SEÇÃO: O MEGAFONE ---
+                    const Row(
+                      children: [
+                        Icon(Icons.campaign, color: Colors.orange, size: 28),
+                        SizedBox(width: 8),
+                        Text(
+                          'Aviso Global (Megafone)',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.05),
+                        border: Border.all(color: Colors.orange.shade200),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: _announcementController,
+                            maxLines: 3,
+                            decoration: InputDecoration(
+                              hintText:
+                                  'Digite o aviso para todos os clientes...',
+                              fillColor: Colors.white,
+                              filled: true,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Colors.orange,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Switch(
+                                    value: _isAnnouncementActive,
+                                    activeColor: Colors.orange,
+                                    onChanged: _isSavingAnnouncement
+                                        ? null
+                                        : (val) {
+                                            _updateAnnouncement(val);
+                                          },
+                                  ),
+                                  Text(
+                                    _isAnnouncementActive
+                                        ? 'Aviso LIGADO'
+                                        : 'Aviso DESLIGADO',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: _isAnnouncementActive
+                                          ? Colors.orange
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                ),
+                                icon: _isSavingAnnouncement
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.save, size: 18),
+                                label: const Text(
+                                  'Salvar Texto',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                onPressed: _isSavingAnnouncement
+                                    ? null
+                                    : () => _updateAnnouncement(
+                                        _isAnnouncementActive,
+                                      ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // --- FIM DO MEGAFONE ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -436,7 +760,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             color: AppColors.primary,
                           ),
                         ),
-                        // Badge mostrando quantos usuários a pesquisa encontrou
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -458,7 +781,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Barra de pesquisa
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -500,7 +822,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // --- LISTA FILTRADA ---
                     if (filteredUsers.isEmpty)
                       Center(
                         child: Padding(
@@ -527,9 +848,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: filteredUsers.length,
                         itemBuilder: (context, index) {
-                          // Usando a lista filtrada agora!
                           final user = filteredUsers[index];
                           final name = user['full_name'] ?? 'Usuário sem nome';
+                          final isActive = user['is_active'] ?? true;
 
                           return Card(
                             elevation: 0,
@@ -541,18 +862,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: AppColors.accent.withValues(
-                                  alpha: 0.2,
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: AppColors.accent,
+                                backgroundColor: isActive
+                                    ? AppColors.accent.withValues(alpha: 0.2)
+                                    : Colors.red.withValues(alpha: 0.2),
+                                child: Icon(
+                                  isActive ? Icons.person : Icons.block,
+                                  color: isActive
+                                      ? AppColors.accent
+                                      : Colors.red,
                                 ),
                               ),
                               title: Text(
                                 name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  decoration: isActive
+                                      ? null
+                                      : TextDecoration.lineThrough,
+                                  color: isActive ? Colors.black : Colors.red,
                                 ),
                               ),
                               subtitle: Text(
@@ -569,7 +896,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     builder: (context) =>
                                         AdminUserDetailsScreen(user: user),
                                   ),
-                                );
+                                ).then((_) => _loadPlatformData());
                               },
                             ),
                           );

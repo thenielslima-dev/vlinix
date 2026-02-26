@@ -20,7 +20,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 2;
+  int _currentIndex = 2; // Começa na aba do meio (Agendamentos)
   Timer? _sessionTimer;
 
   // --- OPÇÃO 2: Variável do Canal Realtime ---
@@ -37,14 +37,13 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _checkDemoUser(); // Mantém sua lógica de 10 min
-    _setupRealtimeSecurity(); // <--- ATIVA O "SEGURANÇA" EM TEMPO REAL
+    _checkDemoUser(); // Inicia verificação do Modo Teste
+    _setupRealtimeSecurity(); // Inicia segurança em tempo real
   }
 
   @override
   void dispose() {
     _sessionTimer?.cancel();
-    // --- OPÇÃO 2: Desliga o rádio ao sair ---
     if (_securitySubscription != null) {
       Supabase.instance.client.removeChannel(_securitySubscription!);
     }
@@ -81,8 +80,7 @@ class _MainScreenState extends State<MainScreen> {
         .subscribe();
   }
 
-  // --- LÓGICA DE LOGOUT (UNIFICADA) ---
-  // Adicionei o parâmetro opcional isSuspended para mudar a mensagem
+  // --- LÓGICA DE LOGOUT (UNIFICADA E INTERNACIONALIZADA) ---
   Future<void> _forceLogout({bool isSuspended = false}) async {
     if (!mounted) return;
 
@@ -91,9 +89,10 @@ class _MainScreenState extends State<MainScreen> {
     if (mounted) {
       final lang = AppLocalizations.of(context)!;
 
-      // Define qual mensagem mostrar
+      // Define qual mensagem traduzida mostrar
       String message = isSuspended
-          ? "Sua conta foi suspensa pelo administrador." // Você pode criar essa chave no l10n depois
+          ? lang
+                .msgAccountSuspendedLive // Chave nova!
           : lang.msgDemoModeEnded;
 
       Navigator.of(context).pushAndRemoveUntil(
@@ -111,7 +110,7 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  // --- LÓGICA DE TEMPO LIMITE (MANTIDA) ---
+  // --- LÓGICA DE TEMPO LIMITE ---
   void _checkDemoUser() {
     final user = Supabase.instance.client.auth.currentUser;
     const emailDeTeste = 'visitante@vlinix.com';
@@ -145,37 +144,68 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ... (O restante do seu código de build permanece exatamente igual)
     final lang = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
-        // ... (seu código de navegação)
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: _onTabTapped,
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.people_outline),
-              label: lang.menuClients,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.directions_car_outlined),
-              label: lang.menuVehicles,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.calendar_month_outlined),
-              label: lang.menuAgenda,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.local_offer_outlined),
-              label: lang.menuServices,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.attach_money),
-              label: lang.menuFinance,
-            ),
-          ],
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.black12, width: 0.5)),
+        ),
+        child: NavigationBarTheme(
+          data: NavigationBarThemeData(
+            // Corrigido para .withValues (Flutter atualizado)
+            indicatorColor: AppColors.accent.withValues(alpha: 0.2),
+            labelTextStyle: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const TextStyle(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                );
+              }
+              return const TextStyle(color: Colors.grey, fontSize: 12);
+            }),
+            iconTheme: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const IconThemeData(color: AppColors.accent);
+              }
+              return const IconThemeData(color: Colors.grey);
+            }),
+          ),
+          child: NavigationBar(
+            height: 65,
+            backgroundColor: Colors.white,
+            selectedIndex: _currentIndex,
+            onDestinationSelected: _onTabTapped,
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.people_outline),
+                selectedIcon: const Icon(Icons.people),
+                label: lang.menuClients,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.directions_car_outlined),
+                selectedIcon: const Icon(Icons.directions_car),
+                label: lang.menuVehicles,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.calendar_month_outlined),
+                selectedIcon: const Icon(Icons.calendar_month),
+                label: lang.menuAgenda,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.local_offer_outlined),
+                selectedIcon: const Icon(Icons.local_offer),
+                label: lang.menuServices,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.attach_money),
+                selectedIcon: const Icon(Icons.monetization_on),
+                label: lang.menuFinance,
+              ),
+            ],
+          ),
         ),
       ),
     );

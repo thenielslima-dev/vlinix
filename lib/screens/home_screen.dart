@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart'; // <--- IMPORT DO MAPA
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vlinix/main.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
@@ -25,10 +25,69 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _upcomingAppointments = [];
   bool _isLoading = true;
 
+  // --- VARIÁVEIS DO MEGAFONE ---
+  String _announcementMessage = '';
+  bool _isAnnouncementActive = false;
+  RealtimeChannel? _announcementChannel;
+  bool _userClosedAnnouncement = false;
+
   @override
   void initState() {
     super.initState();
     _loadDashboardData();
+    _setupAnnouncementListener();
+  }
+
+  @override
+  void dispose() {
+    if (_announcementChannel != null) {
+      Supabase.instance.client.removeChannel(_announcementChannel!);
+    }
+    super.dispose();
+  }
+
+  // --- FUNÇÃO: MEGAFONE EM TEMPO REAL ---
+  Future<void> _setupAnnouncementListener() async {
+    final supabase = Supabase.instance.client;
+
+    try {
+      final data = await supabase
+          .from('global_announcements')
+          .select()
+          .eq('id', 1)
+          .maybeSingle();
+
+      if (data != null && mounted) {
+        setState(() {
+          _announcementMessage = data['message'] ?? '';
+          _isAnnouncementActive = data['is_active'] ?? false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao ler aviso: $e');
+    }
+
+    _announcementChannel = supabase
+        .channel('public:global_announcements')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'global_announcements',
+          callback: (payload) {
+            if (mounted) {
+              setState(() {
+                _userClosedAnnouncement = false;
+                if (payload.eventType == PostgresChangeEvent.update ||
+                    payload.eventType == PostgresChangeEvent.insert) {
+                  _announcementMessage = payload.newRecord['message'] ?? '';
+                  _isAnnouncementActive =
+                      payload.newRecord['is_active'] ?? false;
+                }
+              });
+            }
+          },
+        )
+        .subscribe();
   }
 
   Future<void> _loadDashboardData() async {
@@ -57,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
         vehicles(model, category), 
         services(name),
         appointment_services(id, price, completed, services(name))
-      '''; // <-- ADICIONADO address DO CLIENTE AQUI NA BUSCA
+      ''';
 
       final todayData = await supabase
           .from('appointments')
@@ -86,15 +145,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // --- NOVA FUNÇÃO PARA ABRIR O MAPA ---
   Future<void> _openMap(String address) async {
     final lang = AppLocalizations.of(context)!;
-
-    // URL universal oficial do Google Maps (funciona em Android, iOS e Web)
     final Uri url = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
     );
-
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
@@ -109,7 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // --- ATUALIZAÇÃO DO STATUS ---
   Future<void> _updateStatus(
     int id,
     String newStatus, {
@@ -226,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -235,7 +289,6 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: AppColors.error,
           ),
         );
-      }
     }
   }
 
@@ -330,7 +383,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showPaymentDialog(int appointmentId) {
     final lang = AppLocalizations.of(context)!;
     final currencySymbol = lang.localeName == 'pt' ? 'R\$' : '\$';
-
     final TextEditingController tipController = TextEditingController();
     bool hasTip = false;
 
@@ -440,7 +492,6 @@ class _HomeScreenState extends State<HomeScreen> {
           tipAmount =
               double.tryParse(tipController.text.replaceAll(',', '.')) ?? 0.0;
         }
-
         Navigator.pop(ctx);
         _updateStatus(
           id,
@@ -468,7 +519,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Map<String, dynamic> _processAppointmentData(Map<String, dynamic> apt) {
     final lang = AppLocalizations.of(context)!;
-
     String serviceNames = '';
     double totalPrice = 0.0;
 
@@ -487,7 +537,7 @@ class _HomeScreenState extends State<HomeScreen> {
           : lang.labelUnknownClient,
       'clientAddress': apt['clients'] != null
           ? apt['clients']['address']
-          : null, // <--- ADICIONADO PARA O MAPA
+          : null,
       'vehicleInfo': apt['vehicles'] != null
           ? "${apt['vehicles']['model']} - ${apt['vehicles']['category'] ?? lang.labelCategoryNoCategory}"
           : lang.labelUnknownVehicle,
@@ -503,7 +553,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final currentUser = Supabase.instance.client.auth.currentUser;
     final lang = AppLocalizations.of(context)!;
-
     final String displayName =
         currentUser?.userMetadata?['full_name'] ?? lang.labelDefaultUser;
 
@@ -549,6 +598,84 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // --- O BANNER ELEGANTE DO MEGAFONE (TRADUZIDO) ---
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child:
+                          (_isAnnouncementActive &&
+                              !_userClosedAnnouncement &&
+                              _announcementMessage.isNotEmpty)
+                          ? Container(
+                              margin: const EdgeInsets.only(bottom: 20),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.orange.shade200,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.orange.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(
+                                    Icons.campaign,
+                                    color: Colors.orange,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // --- APLICANDO A TRADUÇÃO AQUI ---
+                                        Text(
+                                          lang.msgImportantNotice,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.orange,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _announcementMessage,
+                                          style: TextStyle(
+                                            color: Colors.grey.shade800,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _userClosedAnnouncement = true;
+                                      });
+                                    },
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.grey,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+
+                    // --- FIM DO BANNER ---
                     Padding(
                       padding: const EdgeInsets.only(bottom: 20.0),
                       child: Row(
@@ -893,20 +1020,17 @@ class _HomeScreenState extends State<HomeScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // --- BOTÃO DE MAPA SEPARADO PARA SERVIÇOS CONCLUÍDOS ---
                 if (data['isCompleted'] && hasAddress)
                   IconButton(
                     icon: const Icon(Icons.map, color: Colors.blue, size: 24),
                     tooltip: lang.btnOpenMap,
                     onPressed: () => _openMap(data['clientAddress']),
                   ),
-
                 IconButton(
                   icon: Icon(actionIcon, color: actionColor, size: 28),
                   tooltip: tooltip,
                   onPressed: onPressed,
                 ),
-
                 if (!data['isCompleted'] && !isCancelled)
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, color: Colors.grey),
@@ -940,7 +1064,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                     },
                     itemBuilder: (context) => [
-                      // --- OPÇÃO DE MAPA NO MENU DE AGENDAMENTOS PENDENTES ---
                       if (hasAddress)
                         PopupMenuItem(
                           value: 'map',
@@ -952,7 +1075,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-
                       PopupMenuItem(
                         value: 'cancel',
                         child: Row(

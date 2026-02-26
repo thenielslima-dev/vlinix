@@ -1335,6 +1335,24 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Mostrar mês inteiro'**
   String get tooltipResetDate;
+
+  /// No description provided for @msgAccountSuspended.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua conta foi suspensa. Entre em contato com o suporte.'**
+  String get msgAccountSuspended;
+
+  /// No description provided for @msgAccountSuspendedLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua conta foi suspensa pelo administrador.'**
+  String get msgAccountSuspendedLive;
+
+  /// No description provided for @msgImportantNotice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aviso Importante'**
+  String get msgImportantNotice;
 }
 
 class _AppLocalizationsDelegate
