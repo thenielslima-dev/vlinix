@@ -663,4 +663,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get msgImportantNotice => 'Aviso Importante';
+
+  @override
+  String get tooltipShop => 'Tienda V-Linix';
 }

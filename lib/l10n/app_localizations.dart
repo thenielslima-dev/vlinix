@@ -1353,6 +1353,12 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Aviso Importante'**
   String get msgImportantNotice;
+
+  /// No description provided for @tooltipShop.
+  ///
+  /// In pt, this message translates to:
+  /// **'Loja V-Linix'**
+  String get tooltipShop;
 }
 
 class _AppLocalizationsDelegate

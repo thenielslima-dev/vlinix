@@ -242,5 +242,6 @@
     "tooltipResetDate": "Mostrar mes entero",
     "msgAccountSuspended": "Tu cuenta ha sido suspendida. Contacta a soporte.",
     "msgAccountSuspendedLive": "Tu cuenta ha sido suspendida por el administrador.",
-    "msgImportantNotice": "Aviso Importante"
+    "msgImportantNotice": "Aviso Importante",
+    "tooltipShop": "Tienda V-Linix"
 }

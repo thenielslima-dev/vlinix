@@ -46,7 +46,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // --- FUNÇÃO: MEGAFONE EM TEMPO REAL ---
   Future<void> _setupAnnouncementListener() async {
     final supabase = Supabase.instance.client;
 
@@ -157,6 +156,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(lang.msgErrorOpenMap),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // --- NOVA FUNÇÃO: ABRIR A LOJA ---
+  Future<void> _openShop() async {
+    final Uri url = Uri.parse('https://vlinix.com/');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível abrir a loja no momento.'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -572,6 +588,16 @@ class _HomeScreenState extends State<HomeScreen> {
           errorBuilder: (context, error, stackTrace) => Text(lang.appTitle),
         ),
         actions: [
+          // --- MUDANÇA: BOTÃO DO CARRINHO (LOJA V-LINIX) ---
+          IconButton(
+            icon: const Icon(
+              Icons.shopping_cart_outlined,
+              color: AppColors.accent,
+            ),
+            tooltip:
+                'Loja V-Linix', // Se quiser usar a chave de tradução, troque por lang.tooltipShop
+            onPressed: _openShop,
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.language),
             onSelected: (String langCode) =>
@@ -599,7 +625,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- O BANNER ELEGANTE DO MEGAFONE (TRADUZIDO) ---
                     AnimatedSize(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
@@ -638,9 +663,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        // --- APLICANDO A TRADUÇÃO AQUI ---
                                         Text(
-                                          lang.msgImportantNotice,
+                                          // Usando a tradução
+                                          AppLocalizations.of(
+                                                context,
+                                              )?.msgImportantNotice ??
+                                              'Aviso Importante',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             color: Colors.orange,
@@ -676,7 +704,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           : const SizedBox.shrink(),
                     ),
 
-                    // --- FIM DO BANNER ---
                     Padding(
                       padding: const EdgeInsets.only(bottom: 20.0),
                       child: Row(
