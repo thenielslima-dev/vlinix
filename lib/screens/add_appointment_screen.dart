@@ -286,12 +286,14 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
       String? googleEventId;
       if (widget.appointmentToEdit == null) {
+        /*
         googleEventId = await GoogleCalendarService.instance.insertEvent(
           title: googleTitle,
           description: googleDesc,
           startTime: finalDateTime,
           endTime: endTime,
         );
+        */
       }
 
       int appointmentId;

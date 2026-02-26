@@ -188,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (newStatus == 'cancelado' || newStatus == 'concluido') {
         if (currentGoogleId != null && currentGoogleId.isNotEmpty) {
-          await GoogleCalendarService.instance.deleteEvent(currentGoogleId);
+          //await GoogleCalendarService.instance.deleteEvent(currentGoogleId);
         }
       } else if (newStatus == 'pendente') {
         final clientName = currentData['clients']['full_name'];
@@ -208,13 +208,14 @@ class _HomeScreenState extends State<HomeScreen> {
           servicesNames,
           '$currency $totalPrice',
         );
-
+        /*
         newGoogleEventId = await GoogleCalendarService.instance.insertEvent(
           title: title,
           description: desc,
           startTime: startTime,
           endTime: endTime,
         );
+        */
       }
 
       final Map<String, dynamic> updateData = {'status': newStatus};

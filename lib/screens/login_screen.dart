@@ -99,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: kIsWeb ? null : 'io.supabase.vlinix://login-callback',
-        scopes: 'https://www.googleapis.com/auth/calendar',
+        //scopes: 'https://www.googleapis.com/auth/calendar',
       );
     } catch (e) {
       if (mounted) {
