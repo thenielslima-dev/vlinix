@@ -6,6 +6,7 @@ import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'main_screen.dart';
 import 'signup_screen.dart';
+import 'admin/admin_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,15 +27,67 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _setupAuthListener() {
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
       final event = data.event;
-      if (event == AuthChangeEvent.signedIn) {
+      final session = data.session;
+
+      if (event == AuthChangeEvent.signedIn && session != null) {
+        if (!mounted) return;
+        FocusManager.instance.primaryFocus?.unfocus();
+
+        // --- O SEGURANÇA DE BALADA (Verifica se está bloqueado) ---
+        try {
+          final profileData = await Supabase.instance.client
+              .from('profiles')
+              .select('is_active')
+              .eq('id', session.user.id)
+              .maybeSingle();
+
+          // Se a coluna is_active existir e for falsa, a conta está suspensa
+          if (profileData != null && profileData['is_active'] == false) {
+            // Chuta o usuário para fora
+            await Supabase.instance.client.auth.signOut();
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Sua conta foi suspensa. Entre em contato com o suporte.',
+                  ),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 4),
+                ),
+              );
+            }
+            return; // Para o código aqui, ele não vai para a tela principal
+          }
+        } catch (e) {
+          debugPrint('Erro ao verificar status do usuário: $e');
+        }
+
+        // Se passou pelo segurança, segue o fluxo normal!
         if (mounted) {
-          FocusManager.instance.primaryFocus?.unfocus();
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-          );
+          final email = session.user.email;
+          final adminEmails = [
+            'theniels.lima@gmail.com',
+            'daniel.admin@admin.com',
+          ];
+
+          if (email != null && adminEmails.contains(email)) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminDashboardScreen(),
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MainScreen(),
+              ), // Substitua por sua tela inicial de clientes
+            );
+          }
         }
       }
     });
