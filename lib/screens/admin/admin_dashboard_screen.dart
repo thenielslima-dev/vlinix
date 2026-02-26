@@ -292,7 +292,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       appBar: AppBar(
         title: const Text('Painel VIP - Vlinix'),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.primary,
         elevation: 0,
         actions: [
           IconButton(
