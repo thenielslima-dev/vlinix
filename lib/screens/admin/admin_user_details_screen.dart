@@ -543,15 +543,6 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
 
                   // --- O BOTÃO VERMELHO DE CONTROLE ---
                   const Divider(),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Zona de Perigo',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
