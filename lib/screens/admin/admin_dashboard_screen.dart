@@ -28,7 +28,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // --- VARIÁVEIS DO MEGAFONE ---
   final _announcementController = TextEditingController();
   bool _isAnnouncementActive = false;
   bool _isSavingAnnouncement = false;
@@ -37,7 +36,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void initState() {
     super.initState();
     _loadPlatformData();
-    _loadAnnouncement(); // Carrega o aviso atual
+    _loadAnnouncement();
 
     _searchController.addListener(() {
       setState(() {
@@ -53,7 +52,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     super.dispose();
   }
 
-  // --- FUNÇÃO: CARREGAR AVISO DO MEGAFONE ---
   Future<void> _loadAnnouncement() async {
     try {
       final data = await Supabase.instance.client
@@ -73,12 +71,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
-  // --- FUNÇÃO: SALVAR AVISO ---
-  // --- FUNÇÃO: SALVAR AVISO ---
   Future<void> _updateAnnouncement(bool isActive) async {
     setState(() => _isSavingAnnouncement = true);
     try {
-      // A CORREÇÃO ESTÁ AQUI: Adicionamos o .select() no final da linha!
       await Supabase.instance.client
           .from('global_announcements')
           .update({
@@ -87,7 +82,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             'updated_at': DateTime.now().toUtc().toIso8601String(),
           })
           .eq('id', 1)
-          .select(); // <--- MÁGICA AQUI
+          .select();
 
       if (mounted) {
         setState(() {
@@ -119,7 +114,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
-  // --- FUNÇÃO DO EXCEL ---
+  // --- NOVA FUNÇÃO AUXILIAR PARA PEGAR O NOME DO PERÍODO ---
+  String _getDateLabel() {
+    if (_startDate != null && _endDate != null) {
+      final startStr = DateFormat('dd/MM/yyyy').format(_startDate!);
+      final endStr = DateFormat('dd/MM/yyyy').format(_endDate!);
+      return startStr == endStr ? startStr : '$startStr até $endStr';
+    }
+    return 'Histórico Total (Todo o período)';
+  }
+
   Future<void> _exportAdminReport() async {
     setState(() => _isLoading = true);
 
@@ -141,11 +145,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         TextCellValue('Data de Geração:'),
         TextCellValue(DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())),
       ]);
+      // --- ADICIONADO: INFORMAÇÃO DO PERÍODO NO EXCEL ---
+      sheet1.appendRow([
+        TextCellValue('Período Selecionado:'),
+        TextCellValue(_getDateLabel()),
+      ]);
       sheet1.appendRow([TextCellValue('')]);
 
       sheet1.appendRow([TextCellValue('Métrica'), TextCellValue('Valor')]);
       sheet1.appendRow([
-        TextCellValue('Faturamento Total Acumulado'),
+        TextCellValue('Faturamento no Período'),
         TextCellValue(_formatCurrency(_totalPlatformRevenue)),
       ]);
       sheet1.appendRow([
@@ -164,8 +173,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         TextCellValue('Nome Completo'),
         TextCellValue('E-mail'),
         TextCellValue('Data de Cadastro'),
-        TextCellValue('Qtd. Clientes'),
-        TextCellValue('Faturamento'),
+        TextCellValue('Carteira Total (Qtd. Clientes)'), // Mantido total
+        TextCellValue('Serviços no Período'), // NOVO: Agendamentos feitos
+        TextCellValue('Faturamento no Período'),
         TextCellValue('Status'),
       ]);
 
@@ -180,7 +190,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           TextCellValue(user['full_name'] ?? 'N/A'),
           TextCellValue(user['email'] ?? 'N/A'),
           TextCellValue(createdAt),
-          IntCellValue(user['total_clients'] ?? 0),
+          IntCellValue(user['total_clients'] ?? 0), // Carteira total
+          IntCellValue(
+            user['appointments_in_period'] ?? 0,
+          ), // NOVO: Serviços do período
           TextCellValue(_formatCurrency(user['total_revenue'] ?? 0.0)),
           TextCellValue((user['is_active'] ?? true) ? 'ATIVO' : 'SUSPENSO'),
         ]);
@@ -384,6 +397,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           .from('profiles')
           .select()
           .order('full_name');
+
+      // Esta busca NÃO TEM FILTRO, pega a carteira total de clientes
       final clientsData = await supabase.from('clients').select('user_id');
 
       var query = supabase
@@ -399,8 +414,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             .lte('start_time', _endDate!.toUtc().toIso8601String());
       }
 
+      // Esta busca TEM FILTRO, pega só o dinheiro e agendamentos do período
       final appointmentsData = await query;
+
       Map<String, double> revenuePerUser = {};
+      Map<String, int> appointmentsPerUser = {}; // NOVO: Conta agendamentos
 
       for (var apt in appointmentsData) {
         double aptTotal = 0.0;
@@ -415,11 +433,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         double tip = (apt['tip_amount'] ?? 0.0).toDouble();
 
         double finalVal = aptTotal + tip;
-
         String uid = apt['user_id'].toString();
+
         revenuePerUser[uid] = (revenuePerUser[uid] ?? 0.0) + finalVal;
+        appointmentsPerUser[uid] = (appointmentsPerUser[uid] ?? 0) + 1; // NOVO
       }
 
+      // Conta o tamanho da carteira total (sem filtro)
       Map<String, int> clientsPerUser = {};
       for (var c in clientsData) {
         String uid = c['user_id'].toString();
@@ -440,7 +460,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 return {
                   ...user,
                   'total_revenue': revenuePerUser[uid] ?? 0.0,
-                  'total_clients': clientsPerUser[uid] ?? 0,
+                  'appointments_in_period':
+                      appointmentsPerUser[uid] ?? 0, // NOVO
+                  'total_clients': clientsPerUser[uid] ?? 0, // MANTIDO
                 };
               })
               .toList();
@@ -478,12 +500,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    String dateLabel = 'Histórico Total (Todo o período)';
-    if (_startDate != null && _endDate != null) {
-      final startStr = DateFormat('dd/MM/yyyy').format(_startDate!);
-      final endStr = DateFormat('dd/MM/yyyy').format(_endDate!);
-      dateLabel = startStr == endStr ? startStr : '$startStr até $endStr';
-    }
+    String dateLabel = _getDateLabel();
 
     final filteredUsers = _usersList.where((user) {
       final name = (user['full_name'] ?? '').toString().toLowerCase();
@@ -636,7 +653,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // --- NOVA SEÇÃO: O MEGAFONE ---
                     const Row(
                       children: [
                         Icon(Icons.campaign, color: Colors.orange, size: 28),
@@ -748,7 +764,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // --- FIM DO MEGAFONE ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -882,12 +897,65 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   color: isActive ? Colors.black : Colors.red,
                                 ),
                               ),
-                              subtitle: Text(
-                                user['email'] ?? 'Sem e-mail cadastrado',
+                              // --- ADICIONADO: MOSTRA A CARTEIRA E OS SERVIÇOS FEITOS NO SUBTÍTULO ---
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user['email'] ?? 'Sem e-mail cadastrado',
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.people,
+                                        size: 14,
+                                        color: Colors.grey,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${user['total_clients']} clientes na base',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      const Icon(
+                                        Icons.check_circle,
+                                        size: 14,
+                                        color: AppColors.success,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${user['appointments_in_period']} lavagens no período',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.success,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                              trailing: const Icon(
-                                Icons.chevron_right,
-                                color: Colors.grey,
+                              trailing: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    _formatCurrency(
+                                      user['total_revenue'] ?? 0.0,
+                                    ),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    color: Colors.grey,
+                                  ),
+                                ],
                               ),
                               onTap: () {
                                 Navigator.push(
