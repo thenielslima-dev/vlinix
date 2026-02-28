@@ -6,6 +6,7 @@ import 'package:vlinix/main.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/widgets/user_profile_menu.dart';
+// import 'package:vlinix/services/google_calendar_service.dart'; // <--- COMENTADO
 
 import 'add_client_screen.dart';
 import 'add_vehicle_screen.dart';
@@ -24,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _upcomingAppointments = [];
   bool _isLoading = true;
 
-  // --- VARIÁVEIS DO MEGAFONE ---
   String _announcementMessage = '';
   bool _isAnnouncementActive = false;
   RealtimeChannel? _announcementChannel;
@@ -189,6 +189,50 @@ class _HomeScreenState extends State<HomeScreen> {
     final lang = AppLocalizations.of(context)!;
 
     try {
+      final currentData = await supabase
+          .from('appointments')
+          .select(
+            '*, clients(full_name), appointment_services(price, services(name))',
+          )
+          .eq('id', id)
+          .single();
+
+      final String? currentGoogleId = currentData['google_event_id'];
+      String? newGoogleEventId;
+
+      /* --- LÓGICA DO GOOGLE CALENDAR COMENTADA ---
+      if (newStatus == 'cancelado' || newStatus == 'concluido') {
+        if (currentGoogleId != null && currentGoogleId.isNotEmpty) {
+          await GoogleCalendarService.instance.deleteEvent(currentGoogleId);
+        }
+      } else if (newStatus == 'pendente') {
+        final clientName = currentData['clients']['full_name'];
+        final startTime = DateTime.parse(currentData['start_time']);
+        final endTime = startTime.add(const Duration(hours: 1));
+
+        final items = currentData['appointment_services'] as List;
+        final servicesNames = items
+            .map((i) => i['services']['name'])
+            .join(', ');
+        final totalPrice = items.fold(0.0, (sum, i) => sum + (i['price'] ?? 0));
+
+        final title = 'Vlinix: $servicesNames - $clientName';
+        final currency = NumberFormat.simpleCurrency(name: '').currencySymbol;
+
+        final desc = lang.msgGoogleReactivated(
+          servicesNames,
+          '$currency $totalPrice',
+        );
+        
+        newGoogleEventId = await GoogleCalendarService.instance.insertEvent(
+          title: title,
+          description: desc,
+          startTime: startTime,
+          endTime: endTime,
+        );
+      }
+      --------------------------------------------------- */
+
       final Map<String, dynamic> updateData = {'status': newStatus};
 
       if (newStatus == 'concluido') {
@@ -201,12 +245,26 @@ class _HomeScreenState extends State<HomeScreen> {
         updateData['tip_amount'] = 0.0;
       }
 
+      if (newGoogleEventId != null) {
+        updateData['google_event_id'] = newGoogleEventId;
+      } else if (newStatus == 'cancelado' || newStatus == 'concluido') {
+        updateData['google_event_id'] = null;
+      }
+
       await supabase.from('appointments').update(updateData).eq('id', id);
       await _loadDashboardData();
 
       if (mounted) {
         String msg = '';
         Color color = Colors.blue;
+
+        if ((newStatus == 'cancelado' || newStatus == 'concluido') &&
+            currentGoogleId != null &&
+            currentGoogleId.isNotEmpty) {
+          feedbackMsg = lang.msgRemovedFromGoogle;
+        } else if (newStatus == 'pendente' && newGoogleEventId != null) {
+          feedbackMsg = lang.msgAddedToGoogle;
+        }
 
         if (newStatus == 'concluido') {
           msg = '${lang.statusDone} ✅';
@@ -471,12 +529,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- NOVA FUNÇÃO DA FASE 3: EDITAR AGENDAMENTO CONCLUÍDO ---
   void _showEditCompletedDialog(Map<String, dynamic> apt) async {
     final supabase = Supabase.instance.client;
     final currencySymbol = NumberFormat.simpleCurrency(name: '').currencySymbol;
 
-    // Busca todos os serviços disponíveis na plataforma para o usuário poder adicionar novos
     final allServicesRes = await supabase
         .from('services')
         .select()
@@ -525,7 +581,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
-                      // Lista de checkboxes com TODOS os serviços, marcando os que já estão no pedido
                       ...allAvailableServices.map((service) {
                         bool isSelected = currentServices.any(
                           (s) => s['service_id'] == service['id'],
@@ -539,7 +594,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           onChanged: (bool? value) {
                             setStateDialog(() {
                               if (value == true) {
-                                // Adiciona o serviço simulando o formato que vem do banco
                                 currentServices.add({
                                   'service_id': service['id'],
                                   'price': service['price'],
@@ -547,7 +601,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   'services': {'name': service['name']},
                                 });
                               } else {
-                                // Remove o serviço
                                 currentServices.removeWhere(
                                   (s) => s['service_id'] == service['id'],
                                 );
@@ -557,7 +610,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }),
                       const Divider(height: 32),
-
                       const Text(
                         'Payment Method:',
                         style: TextStyle(fontWeight: FontWeight.bold),
@@ -583,7 +635,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       const Text(
                         'Tip Amount:',
                         style: TextStyle(fontWeight: FontWeight.bold),
@@ -594,8 +645,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        onChanged: (val) =>
-                            setStateDialog(() {}), // Recalcula total ao digitar
+                        onChanged: (val) => setStateDialog(() {}),
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.attach_money),
                           hintText: '0.00',
@@ -604,7 +654,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 24),
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -647,34 +696,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     backgroundColor: AppColors.primary,
                   ),
                   onPressed: () async {
-                    // 1. Apaga todos os serviços velhos desse agendamento
                     await supabase
                         .from('appointment_services')
                         .delete()
                         .eq('appointment_id', apt['id']);
 
-                    // 2. Insere os novos serviços selecionados
                     if (currentServices.isNotEmpty) {
                       final userId = supabase.auth.currentUser!.id;
-                      final List<Map<String, dynamic>>
-                      servicesToInsert = currentServices
-                          .map(
-                            (s) => {
-                              'user_id': userId,
-                              'appointment_id': apt['id'],
-                              'service_id': s['service_id'],
-                              'price': s['price'],
-                              'completed':
-                                  true, // Como já estava concluído, salva como true
-                            },
-                          )
-                          .toList();
+                      final List<Map<String, dynamic>> servicesToInsert =
+                          currentServices
+                              .map(
+                                (s) => {
+                                  'user_id': userId,
+                                  'appointment_id': apt['id'],
+                                  'service_id': s['service_id'],
+                                  'price': s['price'],
+                                  'completed': true,
+                                },
+                              )
+                              .toList();
                       await supabase
                           .from('appointment_services')
                           .insert(servicesToInsert);
                     }
 
-                    // 3. Atualiza o pagamento e gorjeta na tabela de agendamentos
                     double finalTip =
                         double.tryParse(
                           tipController.text.replaceAll(',', '.'),
@@ -696,7 +741,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           backgroundColor: AppColors.success,
                         ),
                       );
-                      _loadDashboardData(); // Recarrega a tela para mostrar os novos totais
+                      _loadDashboardData();
                     }
                   },
                   child: const Text('Save Changes'),
@@ -727,7 +772,6 @@ class _HomeScreenState extends State<HomeScreen> {
       serviceNames = apt['services']['name'];
     }
 
-    // Adiciona o valor da gorjeta (Tip) no preço total para exibição na tela Home
     double tip = apt['tip_amount'] != null
         ? double.parse(apt['tip_amount'].toString())
         : 0.0;
@@ -744,7 +788,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? "${apt['vehicles']['model']} - ${apt['vehicles']['category'] ?? lang.labelCategoryNoCategory}"
           : lang.labelUnknownVehicle,
       'serviceNames': serviceNames,
-      'totalPrice': grandTotal, // Agora mostra o total + gorjeta
+      'totalPrice': grandTotal,
       'status': apt['status'],
       'isCompleted': apt['status'] == 'concluido',
       'isCancelled': apt['status'] == 'cancelado',
@@ -1242,7 +1286,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: onPressed,
                 ),
 
-                // --- MUDANÇA DA FASE 3: MENU DE OPÇÕES (INCLUINDO CONCLUÍDOS) ---
                 if (!isCancelled)
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, color: Colors.grey),
@@ -1274,12 +1317,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       } else if (value == 'map') {
                         _openMap(data['clientAddress']);
                       } else if (value == 'edit_completed') {
-                        // NOVO BOTÃO DE EDITAR CONCLUÍDOS
                         _showEditCompletedDialog(apt);
                       }
                     },
                     itemBuilder: (context) => [
-                      // Se está concluído, mostra a opção de editar pagamento/serviços
                       if (data['isCompleted'])
                         const PopupMenuItem(
                           value: 'edit_completed',
@@ -1291,8 +1332,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-
-                      // Se não está concluído, pode mostrar as opções normais
                       if (!data['isCompleted'] && hasAddress)
                         PopupMenuItem(
                           value: 'map',

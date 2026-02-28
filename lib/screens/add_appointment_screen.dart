@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
-import 'package:vlinix/services/google_calendar_service.dart';
+// import 'package:vlinix/services/google_calendar_service.dart'; // <--- COMENTADO
 
 import 'add_client_screen.dart';
 import 'add_service_screen.dart';
@@ -271,28 +271,26 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
         _selectedTime.hour,
         _selectedTime.minute,
       );
-      final endTime = finalDateTime.add(const Duration(hours: 1));
 
-      final clientName = _clients.firstWhere(
-        (c) => c['id'] == _selectedClientId,
-      )['full_name'];
-      final servicesNames = _selectedServices.map((s) => s['name']).join(' + ');
-
-      final googleTitle = 'Vlinix: $servicesNames - $clientName';
-      final googleDesc =
-          'Serviços: $servicesNames\nTotal: ${NumberFormat.simpleCurrency(name: '').currencySymbol} $_totalPrice';
+      // COMENTADO: As variáveis abaixo eram usadas pro Google Calendar
+      // final endTime = finalDateTime.add(const Duration(hours: 1));
+      // final clientName = _clients.firstWhere((c) => c['id'] == _selectedClientId)['full_name'];
+      // final servicesNames = _selectedServices.map((s) => s['name']).join(' + ');
+      // final googleTitle = 'Vlinix: $servicesNames - $clientName';
+      // final googleDesc = 'Serviços: $servicesNames\nTotal: ${NumberFormat.simpleCurrency(name: '').currencySymbol} $_totalPrice';
 
       String? googleEventId;
+
+      /* --- GOOGLE CALENDAR COMENTADO ---
       if (widget.appointmentToEdit == null) {
-        /*
         googleEventId = await GoogleCalendarService.instance.insertEvent(
           title: googleTitle,
           description: googleDesc,
           startTime: finalDateTime,
           endTime: endTime,
         );
-        */
       }
+      ----------------------------------- */
 
       int appointmentId;
 
@@ -521,8 +519,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
-
-                        // --- MUDANÇA: BOTÃO DE ADICIONAR CARRO NOVO AO LADO DO DROPDOWN ---
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -557,7 +553,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                             if (_selectedClientId != null) ...[
                               const SizedBox(width: 8),
                               Container(
-                                height: 56, // Mesma altura do TextField padrão
+                                height: 56,
                                 decoration: BoxDecoration(
                                   color: AppColors.accent,
                                   borderRadius: BorderRadius.circular(8),
@@ -578,7 +574,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                                         ),
                                       ),
                                     ).then((_) {
-                                      // Recarrega a lista de veículos quando voltar
                                       _fetchVehicles(_selectedClientId!);
                                     });
                                   },
