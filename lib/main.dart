@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:vlinix/l10n/app_localizations.dart';
 import 'screens/login_screen.dart';
-import 'package:vlinix/theme/app_colors.dart'; // Importante: Nosso arquivo de cores
+import 'package:vlinix/theme/app_colors.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +33,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Locale? _locale; // Se for null, usa o padrão do sistema
+  // --- MUDANÇA AQUI: Forçando o aplicativo a abrir em Inglês ('en') ---
+  Locale? _locale = const Locale('en');
 
   void setLocale(Locale locale) {
     setState(() {
@@ -46,40 +47,29 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Vlinix',
       debugShowCheckedModeBanner: false,
-
-      // --- AQUI ESTÁ A MUDANÇA VISUAL (CSS GLOBAL) ---
       theme: ThemeData(
         useMaterial3: true,
-
-        // 1. Cores Principais
         primaryColor: AppColors.primary,
-        scaffoldBackgroundColor: AppColors.background, // Fundo gelo padrão
-        // 2. Esquema de Cores do Material 3
+        scaffoldBackgroundColor: AppColors.background,
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
           primary: AppColors.primary,
           secondary: AppColors.accent,
           surface: Colors.white,
         ),
-
-        // 3. Estilo da AppBar (Topo)
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.primary, // Chumbo
-          foregroundColor: Colors.white, // Texto/Ícones brancos
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
         ),
-
-        // 4. Botões Flutuantes (FAB) - O botão "+"
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: AppColors.accent, // Dourado
+          backgroundColor: AppColors.accent,
           foregroundColor: Colors.white,
         ),
-
-        // 5. Botões Elevados (ElevatedButton) - Ex: "Salvar", "Entrar"
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary, // Chumbo
+            backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
@@ -87,8 +77,6 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
         ),
-
-        // 6. Estilo dos Inputs (Caixas de Texto) - A Borda Dourada!
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
@@ -102,26 +90,20 @@ class _MyAppState extends State<MyApp> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(
-              color: AppColors.accent,
-              width: 2,
-            ), // Borda Dourada ao focar!
+            borderSide: const BorderSide(color: AppColors.accent, width: 2),
           ),
           labelStyle: const TextStyle(color: AppColors.textSecondary),
-          prefixIconColor: AppColors.primary, // Ícones internos na cor chumbo
+          prefixIconColor: AppColors.primary,
         ),
       ),
-
-      // ------------------------------------------------
       locale: _locale,
-
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('pt'), Locale('en'), Locale('es')],
+      supportedLocales: const [Locale('en'), Locale('pt'), Locale('es')],
       home: const LoginScreen(),
     );
   }

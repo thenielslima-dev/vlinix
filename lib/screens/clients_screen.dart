@@ -5,6 +5,8 @@ import 'package:vlinix/l10n/app_localizations.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/widgets/user_profile_menu.dart';
 import 'add_client_screen.dart';
+// IMPORTANTE: Importar a nova tela de detalhes que vamos criar no Passo 2
+import 'client_details_screen.dart';
 
 class ClientsScreen extends StatefulWidget {
   const ClientsScreen({super.key});
@@ -16,15 +18,13 @@ class ClientsScreen extends StatefulWidget {
 class _ClientsScreenState extends State<ClientsScreen> {
   final _searchController = TextEditingController();
   String _searchText = '';
-
-  // --- MUDANÇA: TROCAMOS O STREAM POR UMA LISTA SIMPLES ---
   List<Map<String, dynamic>> _clients = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadClients(); // Carrega os clientes ao abrir a tela
+    _loadClients();
     _searchController.addListener(() {
       setState(() {
         _searchText = _searchController.text.toLowerCase();
@@ -38,7 +38,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
     super.dispose();
   }
 
-  // --- NOVA FUNÇÃO QUE BUSCA OS DADOS (IGUAL A TELA HOME) ---
   Future<void> _loadClients() async {
     setState(() => _isLoading = true);
     try {
@@ -115,7 +114,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
           ),
         );
       }
-      _loadClients(); // Recarrega a lista após deletar
+      _loadClients();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -135,14 +134,13 @@ class _ClientsScreenState extends State<ClientsScreen> {
         builder: (context) => AddClientScreen(clientToEdit: client),
       ),
     );
-    _loadClients(); // Recarrega a lista caso o usuário tenha salvo um novo cliente
+    _loadClients();
   }
 
   @override
   Widget build(BuildContext context) {
     final lang = AppLocalizations.of(context)!;
 
-    // Filtra a lista localmente baseado no que o usuário digitou
     final filteredClients = _clients.where((client) {
       final name = (client['full_name'] ?? '').toString().toLowerCase();
       final phone = (client['phone'] ?? '').toString().toLowerCase();
@@ -202,14 +200,12 @@ class _ClientsScreenState extends State<ClientsScreen> {
             ),
           ),
           Expanded(
-            // --- MUDANÇA: USAMOS RefreshIndicator AGORA ---
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
                     onRefresh: _loadClients,
                     child: filteredClients.isEmpty
                         ? ListView(
-                            // ListView necessário para o RefreshIndicator funcionar mesmo vazio
                             children: [
                               SizedBox(
                                 height:
@@ -238,8 +234,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                           )
                         : ListView.builder(
                             padding: const EdgeInsets.only(top: 8, bottom: 80),
-                            physics:
-                                const AlwaysScrollableScrollPhysics(), // Permite rolar para atualizar
+                            physics: const AlwaysScrollableScrollPhysics(),
                             itemCount: filteredClients.length,
                             itemBuilder: (context, index) {
                               final client = filteredClients[index];
@@ -271,6 +266,18 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                     horizontal: 16,
                                     vertical: 8,
                                   ),
+                                  // --- MUDANÇA: Clicar em qualquer lugar abre o Perfil do Cliente ---
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ClientDetailsScreen(
+                                              clientData: client,
+                                            ),
+                                      ),
+                                    ).then((_) => _loadClients());
+                                  },
                                   leading: CircleAvatar(
                                     backgroundColor: AppColors.primary
                                         .withValues(alpha: 0.1),
@@ -357,7 +364,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                           ],
                                         ),
                                       ),
-
                                       if (hasAddress)
                                         PopupMenuItem(
                                           value: 'map',
@@ -372,7 +378,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                             ],
                                           ),
                                         ),
-
                                       PopupMenuItem(
                                         value: 'delete',
                                         child: Row(

@@ -7,7 +7,7 @@ import 'package:vlinix/services/google_calendar_service.dart';
 
 import 'add_client_screen.dart';
 import 'add_service_screen.dart';
-import 'add_vehicle_screen.dart'; // <--- IMPORTANTE: Adicionado import do veículo
+import 'add_vehicle_screen.dart';
 
 class AddAppointmentScreen extends StatefulWidget {
   final Map<String, dynamic>? appointmentToEdit;
@@ -33,7 +33,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   bool _isLoading = false;
   bool _isFetchingInitialData = true;
 
-  // --- NOVAS VARIÁVEIS DE CONTROLE DE FLUXO ---
   bool _hasClients = false;
   bool _hasVehicles = false;
   bool _hasServices = false;
@@ -61,7 +60,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
     final supabase = Supabase.instance.client;
     try {
-      // CORREÇÃO: Tiramos o !inner para que clientes sem veículos apareçam na verificação!
       final clientsData = await supabase
           .from('clients')
           .select('*, vehicles(id)')
@@ -77,7 +75,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
           _clients = List<Map<String, dynamic>>.from(clientsData);
           _allServices = List<Map<String, dynamic>>.from(servicesData);
 
-          // VERIFICAÇÕES INTELIGENTES PARA O FLUXO VAZIO
           _hasClients = _clients.isNotEmpty;
           _hasVehicles = _clients.any(
             (c) => c['vehicles'] != null && (c['vehicles'] as List).isNotEmpty,
@@ -118,7 +115,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     final vehiclesData = await Supabase.instance.client
         .from('vehicles')
         .select()
-        .eq('client_id', clientId);
+        .eq('client_id', clientId)
+        .order('model');
 
     if (mounted) {
       setState(() {
@@ -368,7 +366,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     }
   }
 
-  // --- COMPONENTE AUXILIAR PARA BOTÕES ---
   Widget _buildActionButton(
     String label,
     IconData icon,
@@ -421,8 +418,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
               style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 30),
-
-            // LÓGICA INTELIGENTE DOS BOTÕES
             if (!_hasClients) ...[
               _buildActionButton(
                 lang.btnRegisterClient,
@@ -432,7 +427,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
               ),
               const SizedBox(height: 16),
             ],
-
             if (_hasClients && !_hasVehicles) ...[
               _buildActionButton(
                 lang.btnRegisterVehicle,
@@ -442,7 +436,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
               ),
               const SizedBox(height: 16),
             ],
-
             if (!_hasServices) ...[
               _buildActionButton(
                 lang.btnRegisterService,
@@ -471,7 +464,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
       backgroundColor: AppColors.background,
       body: _isFetchingInitialData
           ? const Center(child: CircularProgressIndicator())
-          // AQUI ESTÁ A MÁGICA: Só mostra o Empty State se faltar Client, Veículo ou Serviço
           : (!_hasClients || !_hasVehicles || !_hasServices)
           ? _buildEmptyState()
           : Center(
@@ -510,7 +502,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                                 (c) =>
                                     c['vehicles'] != null &&
                                     (c['vehicles'] as List).isNotEmpty,
-                              ) // Filtra aqui para garantir que não dê bug de carro vazio!
+                              )
                               .map(
                                 (c) => DropdownMenuItem(
                                   value: c['id'] as int,
@@ -529,31 +521,74 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        DropdownButtonFormField<int>(
-                          value: _selectedVehicleId,
-                          decoration: InputDecoration(
-                            labelText: lang.labelVehicle,
-                            prefixIcon: const Icon(Icons.directions_car),
-                          ),
-                          items: _clientVehicles
-                              .map(
-                                (v) => DropdownMenuItem(
-                                  value: v['id'] as int,
-                                  child: Text(
-                                    '${v['model']} - ${v['category'] ?? lang.labelCategoryNoCategory}',
-                                  ),
+
+                        // --- MUDANÇA: BOTÃO DE ADICIONAR CARRO NOVO AO LADO DO DROPDOWN ---
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<int>(
+                                value: _selectedVehicleId,
+                                decoration: InputDecoration(
+                                  labelText: lang.labelVehicle,
+                                  prefixIcon: const Icon(Icons.directions_car),
                                 ),
-                              )
-                              .toList(),
-                          onChanged: _selectedClientId == null
-                              ? null
-                              : (value) =>
-                                    setState(() => _selectedVehicleId = value),
-                          hint: _selectedClientId == null
-                              ? Text(lang.msgSelectClientFirst)
-                              : null,
+                                items: _clientVehicles
+                                    .map(
+                                      (v) => DropdownMenuItem(
+                                        value: v['id'] as int,
+                                        child: Text(
+                                          '${v['model']} - ${v['category'] ?? lang.labelCategoryNoCategory}',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: _selectedClientId == null
+                                    ? null
+                                    : (value) => setState(
+                                        () => _selectedVehicleId = value,
+                                      ),
+                                hint: _selectedClientId == null
+                                    ? Text(lang.msgSelectClientFirst)
+                                    : null,
+                              ),
+                            ),
+                            if (_selectedClientId != null) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                height: 56, // Mesma altura do TextField padrão
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                  ),
+                                  tooltip: 'Add new vehicle',
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => AddVehicleScreen(
+                                          preSelectedClientId:
+                                              _selectedClientId,
+                                        ),
+                                      ),
+                                    ).then((_) {
+                                      // Recarrega a lista de veículos quando voltar
+                                      _fetchVehicles(_selectedClientId!);
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 16),
+
                         InkWell(
                           onTap: _showMultiSelectServices,
                           child: InputDecorator(

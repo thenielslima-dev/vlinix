@@ -21,57 +21,76 @@ class _AddClientScreenState extends State<AddClientScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
 
-  // --- NOVOS CONTROLES DE ENDEREÇO ---
+  // --- CONTROLES DE ENDEREÇO ---
   final _zipController = TextEditingController();
   final _streetController = TextEditingController();
-  final _numberController = TextEditingController();
   final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
+
+  // Variavel para o Dropdown de Estados (Agora armazena a SIGLA para salvar no banco, mas mostra o NOME)
+  String? _selectedStateAbbr;
 
   bool _isLoading = false;
   bool _isSearchingZip = false;
 
-  // Estado para controlar qual país está selecionado (Padrão: BR)
-  String _selectedCountry = 'BR';
+  // --- MAPA DOS ESTADOS (Sigla -> Nome Extenso) ---
+  final Map<String, String> _usStatesMap = {
+    'AL': 'Alabama',
+    'AK': 'Alaska',
+    'AZ': 'Arizona',
+    'AR': 'Arkansas',
+    'CA': 'California',
+    'CO': 'Colorado',
+    'CT': 'Connecticut',
+    'DE': 'Delaware',
+    'FL': 'Florida',
+    'GA': 'Georgia',
+    'HI': 'Hawaii',
+    'ID': 'Idaho',
+    'IL': 'Illinois',
+    'IN': 'Indiana',
+    'IA': 'Iowa',
+    'KS': 'Kansas',
+    'KY': 'Kentucky',
+    'LA': 'Louisiana',
+    'ME': 'Maine',
+    'MD': 'Maryland',
+    'MA': 'Massachusetts',
+    'MI': 'Michigan',
+    'MN': 'Minnesota',
+    'MS': 'Mississippi',
+    'MO': 'Missouri',
+    'MT': 'Montana',
+    'NE': 'Nebraska',
+    'NV': 'Nevada',
+    'NH': 'New Hampshire',
+    'NJ': 'New Jersey',
+    'NM': 'New Mexico',
+    'NY': 'New York',
+    'NC': 'North Carolina',
+    'ND': 'North Dakota',
+    'OH': 'Ohio',
+    'OK': 'Oklahoma',
+    'OR': 'Oregon',
+    'PA': 'Pennsylvania',
+    'RI': 'Rhode Island',
+    'SC': 'South Carolina',
+    'SD': 'South Dakota',
+    'TN': 'Tennessee',
+    'TX': 'Texas',
+    'UT': 'Utah',
+    'VT': 'Vermont',
+    'VA': 'Virginia',
+    'WA': 'Washington',
+    'WV': 'West Virginia',
+    'WI': 'Wisconsin',
+    'WY': 'Wyoming',
+  };
 
-  // --- DEFINIÇÃO DAS MÁSCARAS ---
-  final maskBR = MaskTextInputFormatter(
-    mask: '(##) #####-####',
-    filter: {"#": RegExp(r'[0-9]')},
-    type: MaskAutoCompletionType.lazy,
-  );
-
+  // --- MÁSCARA FIXA PARA OS EUA ---
   final maskUS = MaskTextInputFormatter(
     mask: '(###) ###-####',
     filter: {"#": RegExp(r'[0-9]')},
   );
-
-  final maskMX = MaskTextInputFormatter(
-    mask: '(##) #### ####',
-    filter: {"#": RegExp(r'[0-9]')},
-  );
-
-  MaskTextInputFormatter get _currentMask {
-    switch (_selectedCountry) {
-      case 'US':
-        return maskUS;
-      case 'MX':
-        return maskMX;
-      default:
-        return maskBR;
-    }
-  }
-
-  String get _countryPrefix {
-    switch (_selectedCountry) {
-      case 'US':
-        return '+1 ';
-      case 'MX':
-        return '+52 ';
-      default:
-        return '+55 ';
-    }
-  }
 
   @override
   void initState() {
@@ -80,13 +99,11 @@ class _AddClientScreenState extends State<AddClientScreen> {
       _nameController.text = widget.clientToEdit!['full_name'] ?? '';
       _phoneController.text = widget.clientToEdit!['phone'] ?? '';
       _emailController.text = widget.clientToEdit!['email'] ?? '';
-
-      // Como o endereço antigo era uma string única, colocamos na 'Rua' para o usuário não perder a info
       _streetController.text = widget.clientToEdit!['address'] ?? '';
     }
   }
 
-  // --- BUSCA AUTOMÁTICA DE ENDEREÇO (CEP / ZIPCODE) ---
+  // --- BUSCA AUTOMÁTICA DE ZIPCODE (APENAS EUA) ---
   Future<void> _searchZipCode() async {
     final zip = _zipController.text.replaceAll(RegExp(r'[^0-9a-zA-Z]'), '');
     if (zip.isEmpty) return;
@@ -94,54 +111,39 @@ class _AddClientScreenState extends State<AddClientScreen> {
     setState(() => _isSearchingZip = true);
 
     try {
-      if (_selectedCountry == 'BR') {
-        // API para Brasil (ViaCEP)
-        final res = await http.get(
-          Uri.parse('https://viacep.com.br/ws/$zip/json/'),
-        );
-        if (res.statusCode == 200) {
-          final data = json.decode(res.body);
-          if (data['erro'] == null) {
-            setState(() {
-              _streetController.text = data['logradouro'] ?? '';
-              _cityController.text = data['localidade'] ?? '';
-              _stateController.text = data['uf'] ?? '';
-            });
-          }
+      // API para Estados Unidos (Zippopotam)
+      final res = await http.get(
+        Uri.parse('https://api.zippopotam.us/us/$zip'),
+      );
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        final places = data['places'] as List;
+        if (places.isNotEmpty) {
+          setState(() {
+            _cityController.text = places[0]['place name'] ?? '';
+
+            // Pega a sigla do estado e verifica se existe no nosso mapa
+            String stateAbbr = (places[0]['state abbreviation'] ?? '')
+                .toString()
+                .toUpperCase();
+
+            if (_usStatesMap.containsKey(stateAbbr)) {
+              _selectedStateAbbr = stateAbbr;
+            }
+          });
         }
-      } else if (_selectedCountry == 'US') {
-        // API para Estados Unidos (Zippopotam)
-        final res = await http.get(
-          Uri.parse('https://api.zippopotam.us/us/$zip'),
-        );
-        if (res.statusCode == 200) {
-          final data = json.decode(res.body);
-          final places = data['places'] as List;
-          if (places.isNotEmpty) {
-            setState(() {
-              _cityController.text = places[0]['place name'] ?? '';
-              _stateController.text = places[0]['state abbreviation'] ?? '';
-            });
-          }
-        }
-      } else if (_selectedCountry == 'MX') {
-        // API para México (Zippopotam)
-        final res = await http.get(
-          Uri.parse('https://api.zippopotam.us/mx/$zip'),
-        );
-        if (res.statusCode == 200) {
-          final data = json.decode(res.body);
-          final places = data['places'] as List;
-          if (places.isNotEmpty) {
-            setState(() {
-              _cityController.text = places[0]['place name'] ?? '';
-              _stateController.text = places[0]['state abbreviation'] ?? '';
-            });
-          }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Zipcode not found.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
         }
       }
     } catch (e) {
-      debugPrint('Erro ao buscar CEP/Zip: $e');
+      debugPrint('Erro ao buscar Zipcode: $e');
     } finally {
       setState(() => _isSearchingZip = false);
     }
@@ -155,24 +157,27 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
     try {
       final supabase = Supabase.instance.client;
-      final fullPhone = _phoneController.text.trim();
+
+      // Limpa e formata o telefone para garantir que o +1 seja inserido corretamente
+      String rawPhone = _phoneController.text.trim();
+      String fullPhone = rawPhone.isNotEmpty ? '+1 $rawPhone' : '';
 
       // Montar o endereço em uma string formatada para salvar no banco
       List<String> addressParts = [];
       if (_streetController.text.isNotEmpty) {
-        String street = _streetController.text.trim();
-        if (_numberController.text.isNotEmpty)
-          street += ', ${_numberController.text.trim()}';
-        addressParts.add(street);
+        addressParts.add(_streetController.text.trim());
       }
       if (_cityController.text.isNotEmpty) {
         String cityState = _cityController.text.trim();
-        if (_stateController.text.isNotEmpty)
-          cityState += ' - ${_stateController.text.trim()}';
+        if (_selectedStateAbbr != null) {
+          cityState +=
+              ', $_selectedStateAbbr'; // Salva a Sigla no banco (Ex: Raleigh, NC)
+        }
         addressParts.add(cityState);
       }
-      if (_zipController.text.isNotEmpty)
+      if (_zipController.text.isNotEmpty) {
         addressParts.add(_zipController.text.trim());
+      }
 
       final finalAddress = addressParts.join(' | ');
 
@@ -278,59 +283,16 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: 56,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _selectedCountry,
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _selectedCountry = newValue!;
-                                  _phoneController.clear();
-                                  _zipController
-                                      .clear(); // Limpa CEP ao trocar país
-                                });
-                              },
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'BR',
-                                  child: Text('🇧🇷 BR'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'US',
-                                  child: Text('🇺🇸 US'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'MX',
-                                  child: Text('🇲🇽 MX'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: [_currentMask],
-                            decoration: InputDecoration(
-                              labelText: lang.labelPhone,
-                              prefixIcon: const Icon(Icons.phone),
-                              prefixText: _countryPrefix,
-                              hintText: _currentMask.getMask(),
-                            ),
-                          ),
-                        ),
-                      ],
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [maskUS],
+                      decoration: InputDecoration(
+                        labelText: lang.labelPhone,
+                        prefixIcon: const Icon(Icons.phone),
+                        prefixText: '+1 ',
+                        hintText: maskUS.getMask(),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -347,7 +309,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       child: Divider(),
                     ),
 
-                    // --- ENDEREÇO COM AUTOCOMPLETAR ---
+                    // --- ENDEREÇO AMERICANO ---
                     Text(
                       lang.labelAddress,
                       style: const TextStyle(
@@ -358,61 +320,43 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: TextFormField(
-                            controller: _zipController,
-                            keyboardType: TextInputType.text,
-                            decoration: InputDecoration(
-                              labelText: lang.labelZipcode,
-                              prefixIcon: const Icon(
-                                Icons.markunread_mailbox_outlined,
+                    TextFormField(
+                      controller: _zipController,
+                      keyboardType: TextInputType.text,
+                      decoration: InputDecoration(
+                        labelText: 'Zipcode',
+                        prefixIcon: const Icon(
+                          Icons.markunread_mailbox_outlined,
+                        ),
+                        suffixIcon: _isSearchingZip
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              )
+                            : IconButton(
+                                icon: const Icon(
+                                  Icons.search,
+                                  color: AppColors.accent,
+                                ),
+                                onPressed: _searchZipCode,
                               ),
-                              suffixIcon: _isSearchingZip
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(12),
-                                      child: SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
-                                    )
-                                  : IconButton(
-                                      icon: const Icon(
-                                        Icons.search,
-                                        color: AppColors.accent,
-                                      ),
-                                      onPressed:
-                                          _searchZipCode, // CLIQUE NA LUPA PARA BUSCAR
-                                    ),
-                            ),
-                            onFieldSubmitted: (_) =>
-                                _searchZipCode(), // ENTER PARA BUSCAR
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          flex: 1,
-                          child: TextFormField(
-                            controller: _numberController,
-                            decoration: InputDecoration(
-                              labelText: lang.labelNumber,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
+                      onFieldSubmitted: (_) => _searchZipCode(),
                     ),
                     const SizedBox(height: 16),
 
                     TextFormField(
                       controller: _streetController,
-                      decoration: InputDecoration(
-                        labelText: lang.labelStreet,
-                        prefixIcon: const Icon(Icons.location_on_outlined),
+                      decoration: const InputDecoration(
+                        labelText: 'Street Address',
+                        hintText: 'e.g., 1234 Main St',
+                        prefixIcon: Icon(Icons.location_on_outlined),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -420,7 +364,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     Row(
                       children: [
                         Expanded(
-                          flex: 3,
+                          flex: 2,
                           child: TextFormField(
                             controller: _cityController,
                             decoration: InputDecoration(
@@ -431,12 +375,30 @@ class _AddClientScreenState extends State<AddClientScreen> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          flex: 2,
-                          child: TextFormField(
-                            controller: _stateController,
+                          flex:
+                              3, // Estado ocupa mais espaço por causa do nome grande
+                          child: DropdownButtonFormField<String>(
+                            isExpanded:
+                                true, // Evita erro de layout se o nome for muito grande
+                            value: _selectedStateAbbr,
                             decoration: InputDecoration(
                               labelText: lang.labelState,
                             ),
+                            // Mapeia as chaves (siglas) para construir a lista
+                            items: _usStatesMap.keys.map((String abbr) {
+                              return DropdownMenuItem<String>(
+                                value: abbr,
+                                child: Text(
+                                  _usStatesMap[abbr]!, // Mostra o nome por extenso
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              setState(() {
+                                _selectedStateAbbr = val;
+                              });
+                            },
                           ),
                         ),
                       ],

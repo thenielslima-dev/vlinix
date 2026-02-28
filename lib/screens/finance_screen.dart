@@ -26,8 +26,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
   double _netBalance = 0.0;
 
   List<Map<String, dynamic>> _records = [];
+  List<Map<String, dynamic>> _allAvailableServices = [];
 
-  // --- MUDANÇA: AGORA GUARDAMOS O MÊS E O DIA SEPARADAMENTE ---
   DateTime _selectedMonth = DateTime.now();
   DateTime? _selectedSpecificDay;
   String _selectedFilter = 'todos';
@@ -35,7 +35,24 @@ class _FinanceScreenState extends State<FinanceScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchServicesList();
     _loadFinanceData();
+  }
+
+  Future<void> _fetchServicesList() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('services')
+          .select()
+          .order('name');
+      if (mounted) {
+        setState(() {
+          _allAvailableServices = List<Map<String, dynamic>>.from(res);
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao buscar serviços para o filtro: $e');
+    }
   }
 
   void _changeMonth(int monthsToAdd) {
@@ -45,12 +62,11 @@ class _FinanceScreenState extends State<FinanceScreen> {
         _selectedMonth.month + monthsToAdd,
         1,
       );
-      _selectedSpecificDay = null; // Limpa o dia específico ao trocar de mês
+      _selectedSpecificDay = null;
       _loadFinanceData();
     });
   }
 
-  // --- MUDANÇA: O CALENDÁRIO AGORA DEIXA ESCOLHER O DIA ---
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -74,7 +90,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
     if (picked != null) {
       setState(() {
         _selectedMonth = DateTime(picked.year, picked.month, 1);
-        _selectedSpecificDay = picked; // Salva o dia exato
+        _selectedSpecificDay = picked;
         _loadFinanceData();
       });
     }
@@ -85,6 +101,109 @@ class _FinanceScreenState extends State<FinanceScreen> {
       _selectedFilter = filter;
       _loadFinanceData();
     });
+  }
+
+  void _showAdvancedFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: Text(
+                      'Advanced Filters',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                  const Divider(),
+
+                  ListTile(
+                    leading: const Icon(
+                      Icons.all_inclusive,
+                      color: AppColors.primary,
+                    ),
+                    title: const Text('All Transactions'),
+                    selected: _selectedFilter == 'todos',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _changeFilter('todos');
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.money_off,
+                      color: AppColors.error,
+                    ),
+                    title: const Text('Only Expenses'),
+                    selected: _selectedFilter == 'despesas',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _changeFilter('despesas');
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.volunteer_activism,
+                      color: Colors.orange,
+                    ),
+                    title: const Text('Only Tips (Gorjetas)'),
+                    selected: _selectedFilter == 'gorjetas',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _changeFilter('gorjetas');
+                    },
+                  ),
+
+                  const Divider(),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: Text(
+                      'Filter By Service',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+
+                  ..._allAvailableServices.map((service) {
+                    final String filterKey = 'servico_${service['id']}';
+                    return ListTile(
+                      leading: const Icon(
+                        Icons.local_offer_outlined,
+                        color: AppColors.accent,
+                      ),
+                      title: Text(service['name']),
+                      selected: _selectedFilter == filterKey,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _changeFilter(filterKey);
+                      },
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _updateAppointmentStatus(
@@ -275,12 +394,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
   Future<void> _loadFinanceData() async {
     setState(() => _isLoading = true);
 
-    // --- MUDANÇA: DEFINE SE VAI BUSCAR UM DIA SÓ OU O MÊS INTEIRO ---
     String startTimeStr;
     String endTimeStr;
 
     if (_selectedSpecificDay != null) {
-      // Busca apenas do dia selecionado
       startTimeStr = DateTime(
         _selectedSpecificDay!.year,
         _selectedSpecificDay!.month,
@@ -295,7 +412,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
         59,
       ).toUtc().toIso8601String();
     } else {
-      // Busca do mês inteiro
       startTimeStr = DateTime(
         _selectedMonth.year,
         _selectedMonth.month,
@@ -323,7 +439,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
             payment_method, 
             tip_amount, 
             clients(full_name), 
-            appointment_services(price, services(name)), 
+            appointment_services(service_id, price, services(name)), 
             services(name, price) 
             ''')
           .gte('start_time', startTimeStr)
@@ -337,33 +453,34 @@ class _FinanceScreenState extends State<FinanceScreen> {
       } else {
         queryRevenue = queryRevenue.eq('status', 'concluido');
 
-        if (_selectedFilter != 'todos') {
-          List<String> allowedValues = [];
-          if (_selectedFilter == 'dinheiro')
-            allowedValues = ['dinheiro', 'Dinheiro', 'Cash', 'Efectivo'];
-          else if (_selectedFilter == 'cartao')
-            allowedValues = ['cartao', 'Cartão', 'Card', 'Tarjeta'];
-          else if (_selectedFilter == 'plano')
-            allowedValues = [
-              'plano',
-              'Plano Mensal',
-              'Monthly Plan',
-              'Plan Mensual',
-            ];
-
-          if (allowedValues.isNotEmpty) {
-            queryRevenue = queryRevenue.inFilter(
-              'payment_method',
-              allowedValues,
-            );
-          }
+        if (_selectedFilter == 'dinheiro') {
+          queryRevenue = queryRevenue.inFilter('payment_method', [
+            'dinheiro',
+            'Dinheiro',
+            'Cash',
+            'Efectivo',
+          ]);
+        } else if (_selectedFilter == 'cartao') {
+          queryRevenue = queryRevenue.inFilter('payment_method', [
+            'cartao',
+            'Cartão',
+            'Card',
+            'Tarjeta',
+          ]);
+        } else if (_selectedFilter == 'plano') {
+          queryRevenue = queryRevenue.inFilter('payment_method', [
+            'plano',
+            'Plano Mensal',
+            'Monthly Plan',
+            'Plan Mensual',
+          ]);
         }
       }
 
       final revenueData = await queryRevenue;
 
       List<dynamic> expensesData = [];
-      if (_selectedFilter == 'todos') {
+      if (_selectedFilter == 'todos' || _selectedFilter == 'despesas') {
         expensesData = await supabase
             .from('expenses')
             .select()
@@ -375,24 +492,44 @@ class _FinanceScreenState extends State<FinanceScreen> {
       double expenseTotal = 0.0;
       final List<Map<String, dynamic>> combinedList = [];
 
+      bool isFilteringByService = _selectedFilter.startsWith('servico_');
+      bool isFilteringByTips = _selectedFilter == 'gorjetas';
+      bool isFilteringByExpenses = _selectedFilter == 'despesas';
+
+      int? targetServiceId;
+      if (isFilteringByService) {
+        targetServiceId = int.parse(_selectedFilter.split('_')[1]);
+      }
+
       for (var item in revenueData) {
+        if (isFilteringByExpenses) break;
+
         double appointmentTotal = 0.0;
         String serviceNames = '';
+        bool serviceMatchedFilter = false;
 
         if (item['appointment_services'] != null &&
             (item['appointment_services'] as List).isNotEmpty) {
           final items = item['appointment_services'] as List;
+
+          if (isFilteringByService) {
+            // Verifica se o serviço alvo está nesse agendamento
+            serviceMatchedFilter = items.any(
+              (i) => i['service_id'] == targetServiceId,
+            );
+          }
+
+          // Monta o nome COM TODOS os serviços do agendamento
           appointmentTotal = items.fold(
             0.0,
             (sum, i) => sum + (i['price'] ?? 0.0),
           );
           serviceNames = items.map((i) => i['services']['name']).join(', ');
         } else if (item['services'] != null) {
-          final s = item['services'];
-          appointmentTotal = (s['price'] is int)
-              ? (s['price'] as int).toDouble()
-              : (s['price'] as double? ?? 0.0);
-          serviceNames = s['name'];
+          appointmentTotal = (item['services']['price'] is int)
+              ? (item['services']['price'] as int).toDouble()
+              : (item['services']['price'] as double? ?? 0.0);
+          serviceNames = item['services']['name'];
         }
 
         double tipAmount = 0.0;
@@ -402,8 +539,19 @@ class _FinanceScreenState extends State<FinanceScreen> {
               : (item['tip_amount'] as double);
         }
 
-        final finalTotalValue = appointmentTotal + tipAmount;
-        revenueTotal += finalTotalValue;
+        if (isFilteringByTips && tipAmount <= 0) continue;
+        if (isFilteringByService && !serviceMatchedFilter) continue;
+
+        double displayValue = 0.0;
+        if (isFilteringByTips) {
+          displayValue = tipAmount;
+          serviceNames = 'Tip / Gorjeta';
+        } else {
+          // --- MUDANÇA: MOSTRA O VALOR TOTAL REAL DO AGENDAMENTO (Serviços + Gorjeta) ---
+          displayValue = appointmentTotal + tipAmount;
+        }
+
+        revenueTotal += displayValue;
 
         final isPending =
             item['status'] == 'pendente' || item['status'] == 'em_andamento';
@@ -416,8 +564,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
           'subtitle': item['clients'] != null
               ? item['clients']['full_name']
               : null,
-          'value': finalTotalValue,
-          'tipAmount': tipAmount,
+          'value': displayValue,
+          'tipAmount': isFilteringByTips ? 0.0 : tipAmount, // Exibe normalmente
           'isPending': isPending,
           'rawMethod': item['payment_method'],
         });
@@ -450,6 +598,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
           if (_selectedFilter == 'todos') {
             _netBalance = revenueTotal - expenseTotal;
+          } else if (_selectedFilter == 'despesas') {
+            _netBalance = -expenseTotal;
           } else {
             _netBalance = revenueTotal;
           }
@@ -683,7 +833,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
       String cleanTitle = lang.financeTitle.replaceAll(' ', '_');
 
-      // --- MUDANÇA: O NOME DO ARQUIVO MOSTRA SE É O MÊS OU UM DIA ESPECÍFICO ---
       String dateStr = _selectedSpecificDay != null
           ? DateFormat('dd_MM_yyyy').format(_selectedSpecificDay!)
           : DateFormat('MM_yyyy').format(_selectedMonth);
@@ -769,12 +918,24 @@ class _FinanceScreenState extends State<FinanceScreen> {
   String _getTopBannerText(AppLocalizations lang) {
     if (_selectedFilter == 'todos') return lang.labelNetBalance;
     if (_selectedFilter == 'pendentes') return lang.labelTotalReceivable;
+    if (_selectedFilter == 'despesas') return 'TOTAL EXPENSES';
+    if (_selectedFilter == 'gorjetas') return 'TOTAL TIPS';
     if (_selectedFilter == 'dinheiro')
       return lang.labelTotal(lang.paymentCash.toUpperCase());
     if (_selectedFilter == 'cartao')
       return lang.labelTotal(lang.paymentCard.toUpperCase());
     if (_selectedFilter == 'plano')
       return lang.labelTotal(lang.paymentPlan.toUpperCase());
+
+    // --- MUDANÇA: APPOINTMENTS WITH X ---
+    if (_selectedFilter.startsWith('servico_')) {
+      final id = int.parse(_selectedFilter.split('_')[1]);
+      final service = _allAvailableServices.firstWhere(
+        (s) => s['id'] == id,
+        orElse: () => {'name': 'Service'},
+      );
+      return 'APPOINTMENTS WITH ${service['name'].toUpperCase()}';
+    }
     return '';
   }
 
@@ -783,7 +944,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
     final lang = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).languageCode;
 
-    // Formatação do título do botão central de data
     String displayDateText;
     if (_selectedSpecificDay != null) {
       displayDateText = DateFormat(
@@ -816,7 +976,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
         ],
       ),
 
-      floatingActionButton: _selectedFilter == 'todos'
+      floatingActionButton:
+          _selectedFilter == 'todos' || _selectedFilter == 'despesas'
           ? FloatingActionButton(
               heroTag: 'fab_expenses',
               onPressed: () async {
@@ -842,6 +1003,12 @@ class _FinanceScreenState extends State<FinanceScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
+                  icon: const Icon(Icons.filter_list, color: AppColors.accent),
+                  tooltip: 'Advanced Filters',
+                  onPressed: _showAdvancedFilterDialog,
+                ),
+
+                IconButton(
                   icon: const Icon(
                     Icons.chevron_left,
                     color: AppColors.primary,
@@ -849,7 +1016,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                   onPressed: () => _changeMonth(-1),
                 ),
                 InkWell(
-                  onTap: _pickDate, // Usa o novo seletor de dias
+                  onTap: _pickDate,
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -886,7 +1053,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
                   ),
                 ),
 
-                // --- MUDANÇA: BOTÃO DE LIMPAR CASO UM DIA ESTEJA SELECIONADO ---
                 if (_selectedSpecificDay != null)
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0),
@@ -929,8 +1095,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 _buildFilterChip('dinheiro', lang.paymentCash),
                 const SizedBox(width: 8),
                 _buildFilterChip('cartao', lang.paymentCard),
-                const SizedBox(width: 8),
-                _buildFilterChip('plano', lang.paymentPlan),
               ],
             ),
           ),
@@ -973,7 +1137,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
                         style: TextStyle(
                           color: _selectedFilter == 'pendentes'
                               ? Colors.orange
-                              : (_netBalance >= 0
+                              : (_netBalance >= 0 ||
+                                        _selectedFilter == 'despesas'
                                     ? AppColors.accent
                                     : AppColors.error),
                           fontSize: 36,

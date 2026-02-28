@@ -7,7 +7,7 @@ import 'package:vlinix/l10n/app_localizations.dart';
 // Import das telas filhas
 import 'package:vlinix/screens/home_screen.dart';
 import 'package:vlinix/screens/clients_screen.dart';
-import 'package:vlinix/screens/all_vehicles_screen.dart';
+// REMOVIDO: import 'package:vlinix/screens/all_vehicles_screen.dart';
 import 'package:vlinix/screens/services_screen.dart';
 import 'package:vlinix/screens/finance_screen.dart';
 import 'package:vlinix/screens/login_screen.dart';
@@ -20,16 +20,16 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 2; // Começa na aba do meio (Agendamentos)
+  int _currentIndex =
+      1; // Ajustado para começar na aba de Agenda (que agora é a índice 1)
   Timer? _sessionTimer;
 
-  // --- OPÇÃO 2: Variável do Canal Realtime ---
   RealtimeChannel? _securitySubscription;
 
+  // --- MUDANÇA: Tiramos a AllVehiclesScreen da lista de telas ---
   final List<Widget> _screens = [
     const ClientsScreen(),
-    const AllVehiclesScreen(),
-    const HomeScreen(),
+    const HomeScreen(), // Agenda
     const ServicesScreen(),
     const FinanceScreen(),
   ];
@@ -37,8 +37,8 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _checkDemoUser(); // Inicia verificação do Modo Teste
-    _setupRealtimeSecurity(); // Inicia segurança em tempo real
+    _checkDemoUser();
+    _setupRealtimeSecurity();
   }
 
   @override
@@ -50,14 +50,12 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
-  // --- OPÇÃO 2: LÓGICA DE ESCUTA EM TEMPO REAL ---
   void _setupRealtimeSecurity() {
     final supabase = Supabase.instance.client;
     final myUserId = supabase.auth.currentUser?.id;
 
     if (myUserId == null) return;
 
-    // Escuta mudanças na tabela 'profiles' para o ID do usuário logado
     _securitySubscription = supabase
         .channel('public:profiles')
         .onPostgresChanges(
@@ -71,7 +69,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
           callback: (payload) {
             final isActive = payload.newRecord['is_active'];
-            // Se o admin mudar para false, expulsamos na hora
             if (isActive == false) {
               _forceLogout(isSuspended: true);
             }
@@ -80,7 +77,6 @@ class _MainScreenState extends State<MainScreen> {
         .subscribe();
   }
 
-  // --- LÓGICA DE LOGOUT (UNIFICADA E INTERNACIONALIZADA) ---
   Future<void> _forceLogout({bool isSuspended = false}) async {
     if (!mounted) return;
 
@@ -89,10 +85,8 @@ class _MainScreenState extends State<MainScreen> {
     if (mounted) {
       final lang = AppLocalizations.of(context)!;
 
-      // Define qual mensagem traduzida mostrar
       String message = isSuspended
-          ? lang
-                .msgAccountSuspendedLive // Chave nova!
+          ? lang.msgAccountSuspendedLive
           : lang.msgDemoModeEnded;
 
       Navigator.of(context).pushAndRemoveUntil(
@@ -110,7 +104,6 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  // --- LÓGICA DE TEMPO LIMITE ---
   void _checkDemoUser() {
     final user = Supabase.instance.client.auth.currentUser;
     const emailDeTeste = 'visitante@vlinix.com';
@@ -154,7 +147,6 @@ class _MainScreenState extends State<MainScreen> {
         ),
         child: NavigationBarTheme(
           data: NavigationBarThemeData(
-            // Corrigido para .withValues (Flutter atualizado)
             indicatorColor: AppColors.accent.withValues(alpha: 0.2),
             labelTextStyle: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
@@ -178,16 +170,12 @@ class _MainScreenState extends State<MainScreen> {
             backgroundColor: Colors.white,
             selectedIndex: _currentIndex,
             onDestinationSelected: _onTabTapped,
+            // --- MUDANÇA: APENAS 4 ITENS AGORA ---
             destinations: [
               NavigationDestination(
                 icon: const Icon(Icons.people_outline),
                 selectedIcon: const Icon(Icons.people),
                 label: lang.menuClients,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.directions_car_outlined),
-                selectedIcon: const Icon(Icons.directions_car),
-                label: lang.menuVehicles,
               ),
               NavigationDestination(
                 icon: const Icon(Icons.calendar_month_outlined),
