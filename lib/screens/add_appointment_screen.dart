@@ -563,7 +563,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                                     Icons.add,
                                     color: Colors.white,
                                   ),
-                                  tooltip: 'Add new vehicle',
+                                  tooltip: lang
+                                      .tooltipAddNewVehicle, // <-- TRADUZIDO AQUI
                                   onPressed: () {
                                     Navigator.push(
                                       context,

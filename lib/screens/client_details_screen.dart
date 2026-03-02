@@ -131,7 +131,10 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Client Profile'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(lang.titleClientProfile), // <-- TRADUZIDO AQUI
+        centerTitle: true,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -263,18 +266,19 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Vehicles',
-                        style: TextStyle(
+                      Text(
+                        lang.menuVehicles, // <-- TRADUZIDO AQUI
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
                         ),
                       ),
-                      // --- CORREÇÃO 1: REMOVIDO O onSelected ---
                       ElevatedButton.icon(
                         icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Add Vehicle'),
+                        label: Text(
+                          lang.btnRegisterVehicle,
+                        ), // <-- TRADUZIDO AQUI
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accent,
                           padding: const EdgeInsets.symmetric(
@@ -295,7 +299,6 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        // --- CORREÇÃO 2: REMOVIDO O style: BorderStyle.dash ---
                         border: Border.all(color: Colors.grey.shade300),
                       ),
                       child: Column(
@@ -307,7 +310,7 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            "This client has no vehicles yet.",
+                            lang.msgClientNoVehicles, // <-- TRADUZIDO AQUI
                             style: TextStyle(color: Colors.grey.shade600),
                           ),
                         ],
@@ -347,7 +350,7 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
                               ),
                             ),
                             subtitle: Text(
-                              'Category: ${vehicle['category'] ?? 'N/A'} • Color: ${vehicle['color'] ?? 'N/A'}',
+                              '${lang.labelCategory}: ${vehicle['category'] ?? lang.labelCategoryNoCategory} • ${lang.labelColor}: ${vehicle['color'] ?? 'N/A'}', // <-- TRADUZIDO AQUI
                             ),
                             trailing: PopupMenuButton<String>(
                               icon: const Icon(

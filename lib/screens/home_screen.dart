@@ -163,14 +163,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openShop() async {
+    final lang = AppLocalizations.of(context)!;
     final Uri url = Uri.parse('https://vlinix.com/');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível abrir a loja no momento.'),
+          SnackBar(
+            content: Text(lang.msgErrorGeneric('Could not open shop.')),
             backgroundColor: AppColors.error,
           ),
         );
@@ -529,7 +530,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // --- NOVA FUNÇÃO DA FASE 3: EDITAR AGENDAMENTO CONCLUÍDO ---
   void _showEditCompletedDialog(Map<String, dynamic> apt) async {
+    final lang = AppLocalizations.of(context)!;
     final supabase = Supabase.instance.client;
     final currencySymbol = NumberFormat.simpleCurrency(name: '').currencySymbol;
 
@@ -565,9 +568,9 @@ class _HomeScreenState extends State<HomeScreen> {
             double grandTotal = totalServices + tip;
 
             return AlertDialog(
-              title: const Text(
-                'Edit Completed Service',
-                style: TextStyle(color: AppColors.primary),
+              title: Text(
+                lang.titleEditCompletedService, // <-- TRADUZIDO AQUI
+                style: const TextStyle(color: AppColors.primary),
               ),
               content: SizedBox(
                 width: double.maxFinite,
@@ -576,9 +579,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Services Rendered:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        lang.labelServicesRendered, // <-- TRADUZIDO AQUI
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       ...allAvailableServices.map((service) {
@@ -610,23 +613,26 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }),
                       const Divider(height: 32),
-                      const Text(
-                        'Payment Method:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        lang.dialogPaymentTitle, // Reaproveitado
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       DropdownButton<String>(
                         value: currentPaymentMethod,
                         isExpanded: true,
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'dinheiro',
-                            child: Text('Cash'),
+                            child: Text(lang.paymentCash), // <-- TRADUZIDO AQUI
                           ),
                           DropdownMenuItem(
                             value: 'cartao',
-                            child: Text('Card'),
+                            child: Text(lang.paymentCard), // <-- TRADUZIDO AQUI
                           ),
-                          DropdownMenuItem(value: 'plano', child: Text('Plan')),
+                          DropdownMenuItem(
+                            value: 'plano',
+                            child: Text(lang.paymentPlan), // <-- TRADUZIDO AQUI
+                          ),
                         ],
                         onChanged: (val) {
                           setStateDialog(() {
@@ -635,9 +641,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Tip Amount:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        lang.labelTip, // Reaproveitado
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -664,9 +670,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'New Total:',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                            Text(
+                              lang.labelNewTotal, // <-- TRADUZIDO AQUI
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Text(
                               '$currencySymbol ${grandTotal.toStringAsFixed(2)}',
@@ -686,9 +694,9 @@ class _HomeScreenState extends State<HomeScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.grey),
+                  child: Text(
+                    lang.btnCancel,
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ),
                 ElevatedButton(
@@ -736,15 +744,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (mounted) {
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Payment and Services Updated!'),
+                        SnackBar(
+                          content: Text(
+                            lang.msgPaymentServicesUpdated,
+                          ), // <-- TRADUZIDO AQUI
                           backgroundColor: AppColors.success,
                         ),
                       );
                       _loadDashboardData();
                     }
                   },
-                  child: const Text('Save Changes'),
+                  child: Text(lang.btnSave), // Reaproveitado
                 ),
               ],
             );
@@ -822,7 +832,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Icons.shopping_cart_outlined,
               color: AppColors.accent,
             ),
-            tooltip: 'Loja V-Linix',
+            tooltip: lang.tooltipShop, // <-- TRADUZIDO AQUI
             onPressed: _openShop,
           ),
           PopupMenuButton<String>(
@@ -1322,13 +1332,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     itemBuilder: (context) => [
                       if (data['isCompleted'])
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'edit_completed',
                           child: Row(
                             children: [
-                              Icon(Icons.edit_note, color: AppColors.primary),
-                              SizedBox(width: 8),
-                              Text('Edit Payment/Services'),
+                              const Icon(
+                                Icons.edit_note,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                lang.menuEditPaymentServices,
+                              ), // <-- TRADUZIDO AQUI
                             ],
                           ),
                         ),

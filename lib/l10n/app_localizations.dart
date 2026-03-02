@@ -1359,6 +1359,102 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Loja V-Linix'**
   String get tooltipShop;
+
+  /// No description provided for @tooltipAddNewVehicle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar veículo'**
+  String get tooltipAddNewVehicle;
+
+  /// No description provided for @msgZipcodeNotFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'CEP não encontrado.'**
+  String get msgZipcodeNotFound;
+
+  /// No description provided for @titleClientProfile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil do Cliente'**
+  String get titleClientProfile;
+
+  /// No description provided for @msgClientNoVehicles.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este cliente ainda não tem veículos.'**
+  String get msgClientNoVehicles;
+
+  /// No description provided for @menuEditPaymentServices.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar Pagamento/Serviços'**
+  String get menuEditPaymentServices;
+
+  /// No description provided for @titleEditCompletedService.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar Serviço Concluído'**
+  String get titleEditCompletedService;
+
+  /// No description provided for @labelServicesRendered.
+  ///
+  /// In pt, this message translates to:
+  /// **'Serviços Realizados:'**
+  String get labelServicesRendered;
+
+  /// No description provided for @labelNewTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novo Total:'**
+  String get labelNewTotal;
+
+  /// No description provided for @msgPaymentServicesUpdated.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento e Serviços Atualizados!'**
+  String get msgPaymentServicesUpdated;
+
+  /// No description provided for @titleAdvancedFilters.
+  ///
+  /// In pt, this message translates to:
+  /// **'Filtros Avançados'**
+  String get titleAdvancedFilters;
+
+  /// No description provided for @filterOnlyExpenses.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apenas Despesas'**
+  String get filterOnlyExpenses;
+
+  /// No description provided for @filterOnlyTips.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apenas Gorjetas'**
+  String get filterOnlyTips;
+
+  /// No description provided for @titleFilterByService.
+  ///
+  /// In pt, this message translates to:
+  /// **'Filtrar por Serviço'**
+  String get titleFilterByService;
+
+  /// No description provided for @labelTotalExpenses.
+  ///
+  /// In pt, this message translates to:
+  /// **'TOTAL DESPESAS'**
+  String get labelTotalExpenses;
+
+  /// No description provided for @labelTotalTips.
+  ///
+  /// In pt, this message translates to:
+  /// **'TOTAL GORJETAS'**
+  String get labelTotalTips;
+
+  /// No description provided for @labelAppointmentsWith.
+  ///
+  /// In pt, this message translates to:
+  /// **'AGENDAMENTOS COM {serviceName}'**
+  String labelAppointmentsWith(String serviceName);
 }
 
 class _AppLocalizationsDelegate

@@ -152,7 +152,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     final isEditing = widget.vehicleToEdit != null;
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
 
-    // --- MUDANÇA: Verifica se a tela foi aberta por um cliente específico ---
+    // --- MUDANÇA: Verifica se a tela foi abierta por um cliente específico ---
     final isFromClientProfile = widget.preSelectedClientId != null;
 
     return Scaffold(

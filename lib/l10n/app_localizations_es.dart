@@ -666,4 +666,54 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tooltipShop => 'Tienda V-Linix';
+
+  @override
+  String get tooltipAddNewVehicle => 'Agregar nuevo vehículo';
+
+  @override
+  String get msgZipcodeNotFound => 'Código postal no encontrado.';
+
+  @override
+  String get titleClientProfile => 'Perfil del Cliente';
+
+  @override
+  String get msgClientNoVehicles => 'Este cliente aún no tiene vehículos.';
+
+  @override
+  String get menuEditPaymentServices => 'Editar Pago/Servicios';
+
+  @override
+  String get titleEditCompletedService => 'Editar Servicio Completado';
+
+  @override
+  String get labelServicesRendered => 'Servicios Realizados:';
+
+  @override
+  String get labelNewTotal => 'Nuevo Total:';
+
+  @override
+  String get msgPaymentServicesUpdated => '¡Pago y Servicios Actualizados!';
+
+  @override
+  String get titleAdvancedFilters => 'Filtros Avanzados';
+
+  @override
+  String get filterOnlyExpenses => 'Solo Gastos';
+
+  @override
+  String get filterOnlyTips => 'Solo Propinas';
+
+  @override
+  String get titleFilterByService => 'Filtrar por Servicio';
+
+  @override
+  String get labelTotalExpenses => 'TOTAL GASTOS';
+
+  @override
+  String get labelTotalTips => 'TOTAL PROPINAS';
+
+  @override
+  String labelAppointmentsWith(String serviceName) {
+    return 'CITAS CON $serviceName';
+  }
 }

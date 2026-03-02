@@ -243,5 +243,29 @@
     "msgAccountSuspended": "Sua conta foi suspensa. Entre em contato com o suporte.",
     "msgAccountSuspendedLive": "Sua conta foi suspensa pelo administrador.",
     "msgImportantNotice": "Aviso Importante",
-    "tooltipShop": "Loja V-Linix"
+    "tooltipShop": "Loja V-Linix",
+    
+    "tooltipAddNewVehicle": "Adicionar veículo",
+    "msgZipcodeNotFound": "CEP não encontrado.",
+    "titleClientProfile": "Perfil do Cliente",
+    "msgClientNoVehicles": "Este cliente ainda não tem veículos.",
+    "menuEditPaymentServices": "Editar Pagamento/Serviços",
+    "titleEditCompletedService": "Editar Serviço Concluído",
+    "labelServicesRendered": "Serviços Realizados:",
+    "labelNewTotal": "Novo Total:",
+    "msgPaymentServicesUpdated": "Pagamento e Serviços Atualizados!",
+    "titleAdvancedFilters": "Filtros Avançados",
+    "filterOnlyExpenses": "Apenas Despesas",
+    "filterOnlyTips": "Apenas Gorjetas",
+    "titleFilterByService": "Filtrar por Serviço",
+    "labelTotalExpenses": "TOTAL DESPESAS",
+    "labelTotalTips": "TOTAL GORJETAS",
+    "labelAppointmentsWith": "AGENDAMENTOS COM {serviceName}",
+    "@labelAppointmentsWith": {
+        "placeholders": {
+            "serviceName": {
+                "type": "String"
+            }
+        }
+    }
 }

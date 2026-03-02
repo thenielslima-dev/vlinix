@@ -104,6 +104,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
   }
 
   void _showAdvancedFilterDialog() {
+    final lang = AppLocalizations.of(context)!;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -119,11 +121,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
                     child: Text(
-                      'Advanced Filters',
-                      style: TextStyle(
+                      lang.titleAdvancedFilters,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
@@ -137,7 +142,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       Icons.all_inclusive,
                       color: AppColors.primary,
                     ),
-                    title: const Text('All Transactions'),
+                    title: Text(lang.filterAll),
                     selected: _selectedFilter == 'todos',
                     onTap: () {
                       Navigator.pop(context);
@@ -149,7 +154,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       Icons.money_off,
                       color: AppColors.error,
                     ),
-                    title: const Text('Only Expenses'),
+                    title: Text(lang.filterOnlyExpenses),
                     selected: _selectedFilter == 'despesas',
                     onTap: () {
                       Navigator.pop(context);
@@ -161,7 +166,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       Icons.volunteer_activism,
                       color: Colors.orange,
                     ),
-                    title: const Text('Only Tips (Gorjetas)'),
+                    title: Text(lang.filterOnlyTips),
                     selected: _selectedFilter == 'gorjetas',
                     onTap: () {
                       Navigator.pop(context);
@@ -170,11 +175,14 @@ class _FinanceScreenState extends State<FinanceScreen> {
                   ),
 
                   const Divider(),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
                     child: Text(
-                      'Filter By Service',
-                      style: TextStyle(
+                      lang.titleFilterByService,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.grey,
@@ -513,13 +521,11 @@ class _FinanceScreenState extends State<FinanceScreen> {
           final items = item['appointment_services'] as List;
 
           if (isFilteringByService) {
-            // Verifica se o serviço alvo está nesse agendamento
             serviceMatchedFilter = items.any(
               (i) => i['service_id'] == targetServiceId,
             );
           }
 
-          // Monta o nome COM TODOS os serviços do agendamento
           appointmentTotal = items.fold(
             0.0,
             (sum, i) => sum + (i['price'] ?? 0.0),
@@ -545,9 +551,12 @@ class _FinanceScreenState extends State<FinanceScreen> {
         double displayValue = 0.0;
         if (isFilteringByTips) {
           displayValue = tipAmount;
+          // Não tem como puxar do lang a menos que passemos o context aqui,
+          // então vamos assumir que 'Tip' atende bem todos os idiomas visualmente,
+          // ou usamos a tradução direta:
+          // AQUI: Usaremos "Tip / Gorjeta" fixo pra facilitar a view
           serviceNames = 'Tip / Gorjeta';
         } else {
-          // --- MUDANÇA: MOSTRA O VALOR TOTAL REAL DO AGENDAMENTO (Serviços + Gorjeta) ---
           displayValue = appointmentTotal + tipAmount;
         }
 
@@ -565,7 +574,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
               ? item['clients']['full_name']
               : null,
           'value': displayValue,
-          'tipAmount': isFilteringByTips ? 0.0 : tipAmount, // Exibe normalmente
+          'tipAmount': isFilteringByTips ? 0.0 : tipAmount,
           'isPending': isPending,
           'rawMethod': item['payment_method'],
         });
@@ -918,8 +927,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
   String _getTopBannerText(AppLocalizations lang) {
     if (_selectedFilter == 'todos') return lang.labelNetBalance;
     if (_selectedFilter == 'pendentes') return lang.labelTotalReceivable;
-    if (_selectedFilter == 'despesas') return 'TOTAL EXPENSES';
-    if (_selectedFilter == 'gorjetas') return 'TOTAL TIPS';
+    if (_selectedFilter == 'despesas') return lang.labelTotalExpenses;
+    if (_selectedFilter == 'gorjetas') return lang.labelTotalTips;
     if (_selectedFilter == 'dinheiro')
       return lang.labelTotal(lang.paymentCash.toUpperCase());
     if (_selectedFilter == 'cartao')
@@ -927,14 +936,13 @@ class _FinanceScreenState extends State<FinanceScreen> {
     if (_selectedFilter == 'plano')
       return lang.labelTotal(lang.paymentPlan.toUpperCase());
 
-    // --- MUDANÇA: APPOINTMENTS WITH X ---
     if (_selectedFilter.startsWith('servico_')) {
       final id = int.parse(_selectedFilter.split('_')[1]);
       final service = _allAvailableServices.firstWhere(
         (s) => s['id'] == id,
         orElse: () => {'name': 'Service'},
       );
-      return 'APPOINTMENTS WITH ${service['name'].toUpperCase()}';
+      return lang.labelAppointmentsWith(service['name'].toUpperCase());
     }
     return '';
   }
@@ -1004,7 +1012,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.filter_list, color: AppColors.accent),
-                  tooltip: 'Advanced Filters',
+                  tooltip: lang.titleAdvancedFilters,
                   onPressed: _showAdvancedFilterDialog,
                 ),
 

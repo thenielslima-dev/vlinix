@@ -663,4 +663,54 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tooltipShop => 'Loja V-Linix';
+
+  @override
+  String get tooltipAddNewVehicle => 'Adicionar veículo';
+
+  @override
+  String get msgZipcodeNotFound => 'CEP não encontrado.';
+
+  @override
+  String get titleClientProfile => 'Perfil do Cliente';
+
+  @override
+  String get msgClientNoVehicles => 'Este cliente ainda não tem veículos.';
+
+  @override
+  String get menuEditPaymentServices => 'Editar Pagamento/Serviços';
+
+  @override
+  String get titleEditCompletedService => 'Editar Serviço Concluído';
+
+  @override
+  String get labelServicesRendered => 'Serviços Realizados:';
+
+  @override
+  String get labelNewTotal => 'Novo Total:';
+
+  @override
+  String get msgPaymentServicesUpdated => 'Pagamento e Serviços Atualizados!';
+
+  @override
+  String get titleAdvancedFilters => 'Filtros Avançados';
+
+  @override
+  String get filterOnlyExpenses => 'Apenas Despesas';
+
+  @override
+  String get filterOnlyTips => 'Apenas Gorjetas';
+
+  @override
+  String get titleFilterByService => 'Filtrar por Serviço';
+
+  @override
+  String get labelTotalExpenses => 'TOTAL DESPESAS';
+
+  @override
+  String get labelTotalTips => 'TOTAL GORJETAS';
+
+  @override
+  String labelAppointmentsWith(String serviceName) {
+    return 'AGENDAMENTOS COM $serviceName';
+  }
 }

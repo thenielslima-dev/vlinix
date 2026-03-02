@@ -26,7 +26,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
   final _streetController = TextEditingController();
   final _cityController = TextEditingController();
 
-  // Variavel para o Dropdown de Estados (Agora armazena a SIGLA para salvar no banco, mas mostra o NOME)
+  // Variavel para o Dropdown de Estados
   String? _selectedStateAbbr;
 
   bool _isLoading = false;
@@ -111,7 +111,6 @@ class _AddClientScreenState extends State<AddClientScreen> {
     setState(() => _isSearchingZip = true);
 
     try {
-      // API para Estados Unidos (Zippopotam)
       final res = await http.get(
         Uri.parse('https://api.zippopotam.us/us/$zip'),
       );
@@ -134,9 +133,12 @@ class _AddClientScreenState extends State<AddClientScreen> {
         }
       } else {
         if (mounted) {
+          final lang = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Zipcode not found.'),
+            SnackBar(
+              content: Text(
+                lang.msgZipcodeNotFound,
+              ), // <-- CHAVE TRADUZIDA AQUI
               backgroundColor: Colors.orange,
             ),
           );
@@ -158,11 +160,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
     try {
       final supabase = Supabase.instance.client;
 
-      // Limpa e formata o telefone para garantir que o +1 seja inserido corretamente
       String rawPhone = _phoneController.text.trim();
       String fullPhone = rawPhone.isNotEmpty ? '+1 $rawPhone' : '';
 
-      // Montar o endereço em uma string formatada para salvar no banco
       List<String> addressParts = [];
       if (_streetController.text.isNotEmpty) {
         addressParts.add(_streetController.text.trim());
@@ -170,8 +170,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
       if (_cityController.text.isNotEmpty) {
         String cityState = _cityController.text.trim();
         if (_selectedStateAbbr != null) {
-          cityState +=
-              ', $_selectedStateAbbr'; // Salva a Sigla no banco (Ex: Raleigh, NC)
+          cityState += ', $_selectedStateAbbr';
         }
         addressParts.add(cityState);
       }
@@ -261,7 +260,6 @@ class _AddClientScreenState extends State<AddClientScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- DADOS PESSOAIS ---
                     Text(
                       lang.labelProfileInfo,
                       style: const TextStyle(
@@ -309,7 +307,6 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       child: Divider(),
                     ),
 
-                    // --- ENDEREÇO AMERICANO ---
                     Text(
                       lang.labelAddress,
                       style: const TextStyle(
@@ -324,7 +321,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       controller: _zipController,
                       keyboardType: TextInputType.text,
                       decoration: InputDecoration(
-                        labelText: 'Zipcode',
+                        labelText:
+                            lang.labelZipcode, // <-- CHAVE TRADUZIDA AQUI
                         prefixIcon: const Icon(
                           Icons.markunread_mailbox_outlined,
                         ),
@@ -353,10 +351,10 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
                     TextFormField(
                       controller: _streetController,
-                      decoration: const InputDecoration(
-                        labelText: 'Street Address',
+                      decoration: InputDecoration(
+                        labelText: lang.labelStreet, // <-- CHAVE TRADUZIDA AQUI
                         hintText: 'e.g., 1234 Main St',
-                        prefixIcon: Icon(Icons.location_on_outlined),
+                        prefixIcon: const Icon(Icons.location_on_outlined),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -375,21 +373,18 @@ class _AddClientScreenState extends State<AddClientScreen> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          flex:
-                              3, // Estado ocupa mais espaço por causa do nome grande
+                          flex: 3,
                           child: DropdownButtonFormField<String>(
-                            isExpanded:
-                                true, // Evita erro de layout se o nome for muito grande
+                            isExpanded: true,
                             value: _selectedStateAbbr,
                             decoration: InputDecoration(
                               labelText: lang.labelState,
                             ),
-                            // Mapeia as chaves (siglas) para construir a lista
                             items: _usStatesMap.keys.map((String abbr) {
                               return DropdownMenuItem<String>(
                                 value: abbr,
                                 child: Text(
-                                  _usStatesMap[abbr]!, // Mostra o nome por extenso
+                                  _usStatesMap[abbr]!,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               );
@@ -408,7 +403,6 @@ class _AddClientScreenState extends State<AddClientScreen> {
               ),
               const SizedBox(height: 32),
 
-              // BOTÃO SALVAR
               SizedBox(
                 width: double.infinity,
                 height: 50,

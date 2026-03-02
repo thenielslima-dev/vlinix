@@ -316,7 +316,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelNumber => 'Number';
 
   @override
-  String get labelStreet => 'Street';
+  String get labelStreet => 'Street Address';
 
   @override
   String get labelCity => 'City';
@@ -662,4 +662,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tooltipShop => 'V-Linix Store';
+
+  @override
+  String get tooltipAddNewVehicle => 'Add new vehicle';
+
+  @override
+  String get msgZipcodeNotFound => 'Zipcode not found.';
+
+  @override
+  String get titleClientProfile => 'Client Profile';
+
+  @override
+  String get msgClientNoVehicles => 'This client has no vehicles yet.';
+
+  @override
+  String get menuEditPaymentServices => 'Edit Payment/Services';
+
+  @override
+  String get titleEditCompletedService => 'Edit Completed Service';
+
+  @override
+  String get labelServicesRendered => 'Services Rendered:';
+
+  @override
+  String get labelNewTotal => 'New Total:';
+
+  @override
+  String get msgPaymentServicesUpdated => 'Payment and Services Updated!';
+
+  @override
+  String get titleAdvancedFilters => 'Advanced Filters';
+
+  @override
+  String get filterOnlyExpenses => 'Only Expenses';
+
+  @override
+  String get filterOnlyTips => 'Only Tips';
+
+  @override
+  String get titleFilterByService => 'Filter By Service';
+
+  @override
+  String get labelTotalExpenses => 'TOTAL EXPENSES';
+
+  @override
+  String get labelTotalTips => 'TOTAL TIPS';
+
+  @override
+  String labelAppointmentsWith(String serviceName) {
+    return 'APPOINTMENTS WITH $serviceName';
+  }
 }

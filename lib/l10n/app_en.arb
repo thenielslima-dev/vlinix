@@ -99,7 +99,7 @@
     "msgErrorGeneric": "Error: {error}",
     "labelZipcode": "Zipcode",
     "labelNumber": "Number",
-    "labelStreet": "Street",
+    "labelStreet": "Street Address",
     "labelCity": "City",
     "labelState": "State",
     "msgEmptyName": "Please enter a name",
@@ -243,5 +243,29 @@
     "msgAccountSuspended": "Your account has been suspended. Contact support.",
     "msgAccountSuspendedLive": "Your account has been suspended by the administrator.",
     "msgImportantNotice": "Important Notice",
-    "tooltipShop": "V-Linix Store"
+    "tooltipShop": "V-Linix Store",
+    
+    "tooltipAddNewVehicle": "Add new vehicle",
+    "msgZipcodeNotFound": "Zipcode not found.",
+    "titleClientProfile": "Client Profile",
+    "msgClientNoVehicles": "This client has no vehicles yet.",
+    "menuEditPaymentServices": "Edit Payment/Services",
+    "titleEditCompletedService": "Edit Completed Service",
+    "labelServicesRendered": "Services Rendered:",
+    "labelNewTotal": "New Total:",
+    "msgPaymentServicesUpdated": "Payment and Services Updated!",
+    "titleAdvancedFilters": "Advanced Filters",
+    "filterOnlyExpenses": "Only Expenses",
+    "filterOnlyTips": "Only Tips",
+    "titleFilterByService": "Filter By Service",
+    "labelTotalExpenses": "TOTAL EXPENSES",
+    "labelTotalTips": "TOTAL TIPS",
+    "labelAppointmentsWith": "APPOINTMENTS WITH {serviceName}",
+    "@labelAppointmentsWith": {
+        "placeholders": {
+            "serviceName": {
+                "type": "String"
+            }
+        }
+    }
 }
