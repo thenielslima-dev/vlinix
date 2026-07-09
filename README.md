@@ -30,7 +30,7 @@ If filling the Vercel screen manually, use:
 ```text
 Application Preset: Other
 Root Directory: ./
-Build Command: git clone https://github.com/flutter/flutter.git -b stable --depth 1 /tmp/flutter && export PATH="$PATH:/tmp/flutter/bin" && flutter config --enable-web && flutter pub get && flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+Build Command: bash scripts/vercel-build.sh
 Output Directory: build/web
 Install Command: echo "Flutter dependencies are installed during build"
 ```
