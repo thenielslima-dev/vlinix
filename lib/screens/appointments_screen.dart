@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:http/http.dart' as http;
 import 'package:vlinix/l10n/app_localizations.dart';
+import 'package:vlinix/services/device_calendar_service.dart';
 import 'package:vlinix/theme/app_colors.dart';
 import 'package:vlinix/widgets/user_profile_menu.dart';
 import 'add_appointment_screen.dart';
@@ -20,38 +20,8 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       .stream(primaryKey: ['id'])
       .order('start_time', ascending: true);
 
-  // --- GOOGLE DELETE ---
-  Future<String?> _getSessionToken() async {
-    final session = Supabase.instance.client.auth.currentSession;
-    return session?.providerToken;
-  }
-
-  Future<void> _deleteGoogleEvent(String googleEventId) async {
-    final token = await _getSessionToken();
-    if (token == null) return;
-
-    try {
-      await http.delete(
-        Uri.parse(
-          'https://www.googleapis.com/calendar/v3/calendars/primary/events/$googleEventId',
-        ),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.msgGoogleDeleted),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Erro Delete Google: $e');
-    }
-  }
-
   // --- APP DELETE ---
-  Future<void> _deleteAppointment(int id, String? googleEventId) async {
+  Future<void> _deleteAppointment(int id) async {
     final lang = AppLocalizations.of(context)!; // Trazido para cá
 
     final confirm = await showDialog<bool>(
@@ -79,9 +49,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     if (confirm != true) return;
 
     try {
-      if (googleEventId != null && googleEventId.isNotEmpty) {
-        await _deleteGoogleEvent(googleEventId);
-      }
       await Supabase.instance.client.from('appointments').delete().eq('id', id);
     } catch (e) {
       if (mounted) {
@@ -95,6 +62,50 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         );
       }
     }
+  }
+
+  Future<void> _openInDeviceCalendar(
+    Map<String, dynamic> apt,
+    Map<String, dynamic> client,
+    Map<String, dynamic> vehicle,
+    List<dynamic> appointmentServices,
+  ) async {
+    final lang = AppLocalizations.of(context)!;
+    final startTime = DateTime.parse(apt['start_time']).toLocal();
+    final endTime = apt['end_time'] != null
+        ? DateTime.parse(apt['end_time']).toLocal()
+        : startTime.add(const Duration(hours: 1));
+
+    final services = appointmentServices
+        .map((item) => item['services']?['name'])
+        .whereType<String>()
+        .join(', ');
+    final title = 'Vlinix: ${services.isEmpty ? lang.menuServicos : services}';
+    final vehicleLabel = [
+      vehicle['brand'],
+      vehicle['model'],
+      vehicle['color'],
+    ].whereType<String>().where((item) => item.isNotEmpty).join(' ');
+
+    final ok = await DeviceCalendarService.openCalendarInvite(
+      title: title,
+      description: 'Cliente: ${client['full_name']}\nVeiculo: $vehicleLabel',
+      startTime: startTime,
+      endTime: endTime,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Arquivo de calendario gerado.'
+              : 'Nao foi possivel abrir o calendario neste dispositivo.',
+        ),
+        backgroundColor: ok ? AppColors.success : AppColors.error,
+      ),
+    );
   }
 
   void _navigateToAddEdit({Map<String, dynamic>? appointment}) {
@@ -191,10 +202,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                       .eq('id', apt['vehicle_id'])
                       .single(),
                   Supabase.instance.client
-                      .from('services')
-                      .select()
-                      .eq('id', apt['service_id'])
-                      .single(),
+                      .from('appointment_services')
+                      .select('price, services(name)')
+                      .eq('appointment_id', apt['id']),
                 ]),
                 builder:
                     (context, AsyncSnapshot<List<dynamic>> detailsSnapshot) {
@@ -211,7 +221,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
                       final client = detailsSnapshot.data![0];
                       final vehicle = detailsSnapshot.data![1];
-                      final service = detailsSnapshot.data![2];
+                      final appointmentServices =
+                          detailsSnapshot.data![2] as List<dynamic>;
+                      final servicesLabel = appointmentServices
+                          .map((item) => item['services']?['name'])
+                          .whereType<String>()
+                          .join(', ');
                       final bool isPending = apt['status'] == 'pendente';
 
                       return Card(
@@ -251,7 +266,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 4),
-                              Text('${vehicle['model']} - ${service['name']}'),
+                              Text('${vehicle['model']} - $servicesLabel'),
                               const SizedBox(height: 4),
                               Text(
                                 _formatDate(apt['start_time']),
@@ -268,14 +283,31 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                             onSelected: (value) {
                               if (value == 'edit') {
                                 _navigateToAddEdit(appointment: apt);
-                              } else if (value == 'delete') {
-                                _deleteAppointment(
-                                  apt['id'],
-                                  apt['google_event_id'],
+                              } else if (value == 'calendar') {
+                                _openInDeviceCalendar(
+                                  apt,
+                                  client,
+                                  vehicle,
+                                  appointmentServices,
                                 );
+                              } else if (value == 'delete') {
+                                _deleteAppointment(apt['id']);
                               }
                             },
                             itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'calendar',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.event_available,
+                                      color: AppColors.primary,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text('Abrir no calendario'),
+                                  ],
+                                ),
+                              ),
                               PopupMenuItem(
                                 value: 'edit',
                                 child: Row(

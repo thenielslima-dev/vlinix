@@ -227,6 +227,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 40),
 
                         if (!_isLoading) ...[
+                          /*
+                          Google login is intentionally disabled for the
+                          evaluator build. Email/password login remains active.
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -266,6 +269,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                           const SizedBox(height: 20),
+                          */
                         ],
 
                         TextField(
