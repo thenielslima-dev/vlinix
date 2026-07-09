@@ -6,14 +6,24 @@ import 'package:vlinix/l10n/app_localizations.dart';
 import 'screens/login_screen.dart';
 import 'package:vlinix/theme/app_colors.dart';
 
+const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
 
+  if (_supabaseUrl.isEmpty || _supabaseAnonKey.isEmpty) {
+    throw StateError(
+      'Missing Supabase configuration. Build with '
+      '--dart-define=SUPABASE_URL=... and '
+      '--dart-define=SUPABASE_ANON_KEY=...',
+    );
+  }
+
   await Supabase.initialize(
-    url: 'https://hjjsohmziddrlqggaimm.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqanNvaG16aWRkcmxxZ2dhaW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwODIwMDMsImV4cCI6MjA4NTY1ODAwM30.3Rb_RDwKmNDhuB_1ViqwQm35WUBaq2_9iLtr-cWsg2Y',
+    url: _supabaseUrl,
+    anonKey: _supabaseAnonKey,
   );
 
   runApp(const MyApp());

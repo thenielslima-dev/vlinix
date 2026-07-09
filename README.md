@@ -1,16 +1,49 @@
-# vlinix
+# Vlinix
 
-A new Flutter project.
+Vlinix is a Flutter web app for auto detailing business management. It includes authentication, client records, vehicles, services, appointments, expenses, dashboard views, admin controls, avatar upload, and multilingual UI support.
 
-## Getting Started
+## Stack
 
-This project is a starting point for a Flutter application.
+- Flutter / Dart
+- Supabase Auth
+- Supabase Postgres
+- Supabase Storage
+- Vercel deployment for the web build
 
-A few resources to get you started if this is your first Flutter project:
+## Required Environment Variables
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Create these variables in Vercel before deploying:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```env
+SUPABASE_URL=https://hjjsohmziddrlqggaimm.supabase.co
+SUPABASE_ANON_KEY=your_supabase_publishable_or_anon_key
+```
+
+Use the Supabase publishable key (`sb_publishable_...`) or the legacy `anon public` key. Never use `service_role` or `sb_secret_...` in this Flutter web app.
+
+## Vercel
+
+This repository includes `vercel.json`, so Vercel can use the correct Flutter web build settings automatically.
+
+If filling the Vercel screen manually, use:
+
+```text
+Application Preset: Other
+Root Directory: ./
+Build Command: git clone https://github.com/flutter/flutter.git -b stable --depth 1 /tmp/flutter && export PATH="$PATH:/tmp/flutter/bin" && flutter config --enable-web && flutter pub get && flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+Output Directory: build/web
+Install Command: echo "Flutter dependencies are installed during build"
+```
+
+## Local Web Build
+
+```bash
+flutter pub get
+flutter build web --release \
+  --dart-define=SUPABASE_URL=https://hjjsohmziddrlqggaimm.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your_supabase_publishable_or_anon_key
+```
+
+## Notes for Reviewers
+
+The deployed app requires a configured Supabase project and valid test account credentials. Database access is protected by Supabase Row Level Security policies.
